@@ -1,0 +1,46 @@
+@{
+    ViewData["Title"] = "Create Account";
+    var ui = Context.Request.Cookies["cinema_lang"] ?? "en-US";
+}
+
+<div class="content-wrapper" style="padding-top: 4rem; max-width: 440px;">
+    <div class="admin-card" style="box-shadow: var(--shadow-subtle);">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🍿</div>
+            <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;">@UiStrings.Tr(ui, "Create Account")</h1>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">@UiStrings.Tr(ui, "Join CinemaApp for personalized streaming")</p>
+        </div>
+
+        @if (ViewBag.Error != null)
+        {
+            <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid var(--accent-rose); color: #fda4af; padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.85rem;">
+                @ViewBag.Error
+            </div>
+        }
+
+        <form asp-action="Register" method="post">
+            <div class="form-group">
+                <label class="form-label">@UiStrings.Tr(ui, "Email Address")</label>
+                <input type="email" name="email" class="form-control" placeholder="yourname@example.com" required />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">@UiStrings.Tr(ui, "Password")</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required />
+            </div>
+
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label class="form-label">@UiStrings.Tr(ui, "Confirm Password")</label>
+                <input type="password" name="confirmPassword" class="form-control" placeholder="••••••••" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+                @UiStrings.Tr(ui, "Create Free Account")
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
+            @UiStrings.Tr(ui, "Already have an account?") <a asp-action="Login" style="color: var(--accent-cyan); font-weight: 600;">@UiStrings.Tr(ui, "Sign In")</a>
+        </div>
+    </div>
+</div>

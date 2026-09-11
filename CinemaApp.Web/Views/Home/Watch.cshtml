@@ -1,0 +1,164 @@
+@model CinemaApp.Web.Models.WatchViewModel
+@{
+    ViewData["Title"] = "Watching " + Model.Movie.Title;
+    var ui = Context.Request.Cookies["cinema_lang"] ?? "en-US";
+}
+
+<div class="watch-container">
+    <div style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+        <a asp-controller="Home" asp-action="Index" asp-route-lang="@Model.CurrentCulture" class="btn btn-secondary btn-sm">
+            <span>←</span> @UiStrings.Tr(ui, "Back to Movies")
+        </a>
+        <div style="font-size: 0.9rem; color: var(--text-muted);">
+            @UiStrings.Tr(ui, "Playing:"): <strong style="color: #fff;">@Model.Movie.Title</strong>
+        </div>
+    </div>
+
+    <div class="player-card">
+        <div class="video-wrapper">
+            @if (Model.RequiresSubscription)
+            {
+                <!-- Quality Restricted Gatekeeper Modal -->
+                <div class="restricted-overlay">
+                    <div class="lock-icon-wrap">🔒</div>
+                    <h2 style="font-size: 1.8rem; margin-bottom: 0.5rem; color: #fff;">@UiStrings.Tr(ui, "Pro Subscription Required")</h2>
+                    <p style="max-width: 520px; color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+                        @UiStrings.Tr(ui, "ProLockText")
+                    </p>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                        <a asp-controller="Account" asp-action="Subscription" class="btn btn-gold" style="padding: 0.75rem 1.75rem; font-size: 1rem;">
+                            <span>⭐</span> @UiStrings.Tr(ui, "Upgrade to Cinema Pro ($9.99/mo)")
+                        </a>
+                        <a href="@Url.Action("Watch", new { id = Model.Movie.Id, quality = "480p", lang = Model.CurrentCulture })" class="btn btn-secondary">
+                            @UiStrings.Tr(ui, "Watch in 480p (Free)")
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <video id="cinemaVideoPlayer" class="cinema-video" controls autoplay preload="metadata">
+                    <source src="@Model.StreamUrl" type="video/mp4" />
+                    Your browser does not support HTML5 video streaming with byte-ranges.
+                </video>
+            }
+        </div>
+
+        <div class="player-controls-bar">
+            <div>
+                <span style="font-size: 0.85rem; color: var(--text-muted); margin-right: 0.5rem;">@UiStrings.Tr(ui, "Select Stream Resolution:")</span>
+                <div class="quality-selector-group" style="display: inline-flex;">
+                    @foreach (var q in Model.AllQualities)
+                    {
+                        var isPro = !StreamQualityConstants.IsFreeQuality(q);
+                        var isSelected = Model.CurrentQuality.Equals(q, StringComparison.OrdinalIgnoreCase);
+                        <a href="@Url.Action("Watch", new { id = Model.Movie.Id, quality = q, lang = Model.CurrentCulture })"
+                           class="quality-btn @(isSelected ? "active" : "") @(isPro ? "pro-badge" : "")">
+                            @q.ToUpper() @(isPro ? "★ PRO" : "")
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div>
+                @if (Model.UserIsSubscribed)
+                {
+                    <span style="font-size: 0.8rem; color: var(--accent-gold); font-weight: 700;">✓ @UiStrings.Tr(ui, "VIP Access Active (Max Quality Unlocked)")</span>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Subscription" class="btn btn-gold btn-sm">
+                        <span>⭐</span> @UiStrings.Tr(ui, "Upgrade for 1080p")
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Movie Details Section -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2rem; margin-top: 2rem; display: flex; gap: 2rem; flex-wrap: wrap;">
+        <img src="@(Model.Movie.PosterUrl ?? MediaUrls.FallbackPoster)" alt="@Model.Movie.Title" style="width: 140px; border-radius: var(--radius-md); object-fit: cover;"
+             onerror="this.onerror=null; this.src='@MediaUrls.FallbackPoster';" />
+
+        <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">@Model.Movie.Title</h2>
+                @if (Model.Movie.RatingCount > 0)
+                {
+                    <span class="hero-badge" style="margin-bottom: 0.5rem;">★ @Model.Movie.AverageRating.ToString("0.0") <span id="ratingCount" style="font-weight:400;">(@Model.Movie.RatingCount)</span></span>
+                }
+            </div>
+            <div style="display: flex; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                <span>📅 @Model.Movie.ReleaseYear</span>
+                <span>⏱️ @Model.Movie.DurationMinutes @UiStrings.Tr(ui, "minutes")</span>
+                <span>🎭 @Model.Movie.Genres</span>
+            </div>
+            <p style="color: var(--text-muted); line-height: 1.7; font-size: 1rem;">
+                @Model.Movie.Description
+            </p>
+
+            <!-- RATING WIDGET -->
+            <div class="rating-widget">
+                <div class="rating-widget-head">
+                    <span>⭐ @UiStrings.Tr(ui, "Rate this movie")</span>
+                    <span id="ratingSaved" class="rating-saved" style="display:none;">✓ @UiStrings.Tr(ui, "Your rating has been saved")</span>
+                    <span class="rating-avg" id="ratingAvg">@Model.Movie.AverageRating.ToString("0.0")</span>
+                    <span class="rating-votes" id="ratingVotes">@(Model.Movie.RatingCount) @UiStrings.Tr(ui, "votes")</span>
+                </div>
+                <div class="rating-stars">
+                    @for (int s = 1; s <= 5; s++)
+                    {
+                        var lit = Model.Movie.RatingCount > 0 && s <= (int)Math.Round((double)Model.Movie.AverageRating);
+                        <span data-value="@s" class="rating-star @(lit ? "lit" : "")">★</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const movieId = @Model.Movie.Id;
+
+            function getVisitorId() {
+                const prefix = 'cinema_visitor=';
+                const parts = document.cookie.split(';').map(c => c.trim());
+                const hit = parts.find(c => c.indexOf(prefix) === 0);
+                if (hit) return decodeURIComponent(hit.slice(prefix.length));
+                const id = (crypto.randomUUID && crypto.randomUUID()) ||
+                           ('v-' + Date.now().toString(36) + Math.random().toString(36).slice(2));
+                document.cookie = prefix + encodeURIComponent(id) + '; path=/; max-age=' + (365 * 24 * 3600);
+                return id;
+            }
+
+            const stars = document.querySelectorAll('.rating-star');
+            const avgEl = document.getElementById('ratingAvg');
+            const votesEl = document.getElementById('ratingVotes');
+            const savedEl = document.getElementById('ratingSaved');
+
+            stars.forEach((star) => {
+                star.addEventListener('click', async () => {
+                    const score = parseInt(star.dataset.value, 10);
+                    try {
+                        const res = await fetch('/api/v1/Movies/' + movieId + '/rating', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ visitorId: getVisitorId(), score: score })
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                            stars.forEach(s => s.classList.toggle('lit', parseInt(s.dataset.value, 10) <= score));
+                            avgEl.textContent = Number(data.averageRating).toFixed(1);
+                            votesEl.textContent = data.ratingCount + ' @UiStrings.Tr(ui, "votes")';
+                            savedEl.style.display = 'inline-flex';
+                        }
+                    } catch (e) {
+                        console.error('Rating request failed', e);
+                    }
+                });
+            });
+        })();
+    </script>
+}

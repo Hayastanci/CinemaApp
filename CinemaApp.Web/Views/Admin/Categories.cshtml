@@ -1,0 +1,129 @@
+@model CinemaApp.Web.Models.CategoryAdminViewModel
+@{
+    ViewData["Title"] = "Category Management";
+}
+
+<div class="content-wrapper" style="padding-top: 2rem; max-width: 1000px;">
+    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+        <a asp-action="Index" class="btn btn-secondary btn-sm">
+            <span>←</span> Back to Dashboard
+        </a>
+        <span style="color: var(--accent-green); font-weight: 600; font-size: 0.9rem;">
+            Catalog Categories & Genres
+        </span>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-green); color: #6ee7b7; padding: 0.75rem 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            ✔ @Model.SuccessMessage
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid var(--accent-rose); color: #fda4af; padding: 0.75rem 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            ✖ @Model.ErrorMessage
+        </div>
+    }
+
+    <div class="admin-card">
+        <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Manage Categories</h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">
+            Categories appear in the site filter sidebar and movie editor. Each category carries a localized name and description for every active language.
+        </p>
+
+        <!-- ADD CATEGORY FORM -->
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
+            <h3 style="font-size: 1.15rem; margin-bottom: 1rem; color: var(--accent-cyan);">Create New Category</h3>
+            <form asp-action="CreateCategory" method="post">
+                <div class="form-group" style="max-width: 360px; margin-bottom: 1.5rem;">
+                    <label class="form-label">Slug (URL identifier, unique)</label>
+                    <input type="text" name="slug" class="form-control" placeholder="e.g. thriller, comedy, documentary" required
+                           style="text-transform: lowercase;" />
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                            <th style="padding: 0.5rem 0.5rem 0.5rem 0;">Language</th>
+                            <th style="padding: 0.5rem;">Name</th>
+                            <th style="padding: 0.5rem;">Description (optional)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < Model.Languages.Count; i++)
+                        {
+                            var lang = Model.Languages[i];
+                            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04);">
+                                <td style="padding: 0.5rem 0.5rem 0.5rem 0; font-weight: 600; white-space: nowrap; min-width: 160px;">
+                                    @lang.DisplayName
+                                    <span style="color: var(--text-dim); font-size: 0.75rem; display: block; font-family: monospace;">@lang.CultureCode</span>
+                                </td>
+                                <td style="padding: 0.5rem;">
+                                    <input type="text" name="Translations[@i].Name" class="form-control" placeholder="@(lang.IsDefault ? "Name (required)" : lang.DisplayName)" />
+                                </td>
+                                <td style="padding: 0.5rem;">
+                                    <input type="text" name="Translations[@i].Description" class="form-control" placeholder="Short description" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        <span>➕</span> Create Category
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- CATEGORIES TABLE -->
+        @if (Model.Categories.Count == 0)
+        {
+            <p style="color: var(--text-dim); text-align: center; padding: 2rem 0;">No categories yet. Create your first one above.</p>
+        }
+        else
+        {
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                        <th style="padding: 0.75rem 1rem;">ID</th>
+                        <th style="padding: 0.75rem 1rem;">Slug</th>
+                        <th style="padding: 0.75rem 1rem;">Localized Names</th>
+                        <th style="padding: 0.75rem 1rem; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04);">
+                            <td style="padding: 1rem; color: var(--text-dim); font-weight: 700;">#@cat.Id</td>
+                            <td style="padding: 1rem; font-weight: 700; color: var(--accent-cyan); font-family: monospace;">@cat.Slug</td>
+                            <td style="padding: 1rem;">
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                                    @foreach (var t in cat.Translations)
+                                    {
+                                        <span title="@t.Description" style="background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-color); font-size: 0.75rem; padding: 2px 8px; border-radius: 999px;">
+                                            <span style="color: var(--text-dim);">@t.CultureCode:</span> @t.Name
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+                            <td style="padding: 1rem; text-align: right;">
+                                <form asp-action="DeleteCategory" method="post" style="display: inline;"
+                                      onsubmit="return confirm('Delete category &quot;@cat.Slug&quot;? This will not remove its movies.');">
+                                    <input type="hidden" name="id" value="@cat.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <span>🗑️</span> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

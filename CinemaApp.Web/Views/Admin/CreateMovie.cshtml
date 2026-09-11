@@ -1,0 +1,290 @@
+@model CinemaApp.Web.Models.MovieCreateViewModel
+@{
+    ViewData["Title"] = Model.IsEditing ? "Edit Movie (Multilingual)" : "Add New Movie (Multilingual & AI Powered)";
+    var editMode = Model.IsEditing;
+}
+
+<div class="content-wrapper" style="padding-top: 2rem; max-width: 1000px;">
+    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+        <a asp-action="Index" class="btn btn-secondary btn-sm">
+            <span>←</span> Back to Dashboard
+        </a>
+        <span style="color: var(--accent-cyan); font-weight: 600; font-size: 0.9rem;">
+            @(editMode ? "Edit Mode" : "Dynamic Multilingual Form")
+        </span>
+    </div>
+
+    @if (TempData["ErrorMessage"] is string adminError)
+    {
+        <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid var(--accent-rose); color: #fda4af; padding: 0.75rem 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            ✖ @adminError
+        </div>
+    }
+    @if (TempData["SuccessMessage"] is string adminSuccess)
+    {
+        <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-green); color: #6ee7b7; padding: 0.75rem 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.9rem;">
+            ✔ @adminSuccess
+        </div>
+    }
+
+    <div class="admin-card">
+        <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">
+            @(editMode ? $"Edit Movie #{Model.Id}" : "Create New Movie")
+        </h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">
+            @(editMode
+                ? "Update the localized translations, genres and metadata below. Changes are saved back to the catalog immediately."
+                : "Provide title and details manually or use AI to automatically generate synchronized translations across all active languages, then fine-tune prior to saving.")
+        </p>
+
+        @if (!editMode)
+        {
+            <!-- AI CONTENT GENERATION ENGINE PANEL -->
+            <div class="ai-generator-panel">
+                <div style="flex: 1; min-width: 260px;">
+                    <label class="form-label" style="color: var(--accent-cyan);">Seed Movie Title (Any Language):</label>
+                    <input type="text" id="aiSeedTitle" class="form-control" placeholder="e.g. Gladiator II, Interstellar, Մխիթար..." />
+                </div>
+                <div style="width: 180px;">
+                    <label class="form-label" style="color: var(--accent-cyan);">Genre Hint (Optional):</label>
+                    <input type="text" id="aiHintGenre" class="form-control" placeholder="e.g. Sci-Fi, Action..." />
+                </div>
+                <div style="align-self: flex-end;">
+                    <button type="button" id="btnAutoGenerateAi" class="btn btn-primary" onclick="generateAiContent()">
+                        <span id="aiBtnIcon">⚡</span>
+                        <span id="aiBtnText">Auto-Generate Translations</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="aiStatusAlert" style="display: none; padding: 0.75rem 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.9rem;"></div>
+        }
+
+        <form asp-action="@(editMode ? "EditMovie" : "CreateMovie")" method="post" enctype="multipart/form-data">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="PosterUrl" />
+            <input type="hidden" asp-for="BannerUrl" />
+            <!-- GENERAL SETTINGS -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="form-group">
+                    <label asp-for="ReleaseYear" class="form-label">Release Year</label>
+                    <input asp-for="ReleaseYear" class="form-control" id="formReleaseYear" type="number" />
+                </div>
+                <div class="form-group">
+                    <label asp-for="DurationMinutes" class="form-label">Duration (Minutes)</label>
+                    <input asp-for="DurationMinutes" class="form-control" id="formDuration" type="number" />
+                </div>
+            </div>
+
+            <!-- CATEGORIES -->
+            <div class="form-group">
+                <label class="form-label">Categories / Genres</label>
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    @foreach (var cat in Model.AvailableCategories)
+                    {
+                        <label style="display: flex; align-items: center; gap: 0.4rem; background: var(--bg-surface); padding: 0.4rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); cursor: pointer; font-size: 0.85rem;">
+                            <input type="checkbox" name="SelectedCategoryIds" value="@cat.Id" @(Model.SelectedCategoryIds.Contains(cat.Id) ? "checked" : "") />
+                            <span>@cat.Name</span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <!-- MULTILINGUAL TRANSLATION TABS (ENGLISH, ARMENIAN, RUSSIAN, ETC.) -->
+            <div style="margin: 2rem 0;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                    <h3 style="font-size: 1.25rem;">Localized Content & Translations</h3>
+                    <span style="font-size: 0.8rem; color: var(--text-dim);">Tabbed language fields pre-populated by AI with manual override capability</span>
+                </div>
+
+                <!-- Tab Navigation Headers -->
+                <div class="tab-nav" id="languageTabsNav">
+                    @for (int i = 0; i < Model.Translations.Count; i++)
+                    {
+                        var t = Model.Translations[i];
+                        <button type="button" class="tab-btn @(i == 0 ? "active" : "")"
+                                onclick="switchLanguageTab('@t.CultureCode')" id="tabBtn_@t.CultureCode">
+                            <span>@(t.CultureCode.StartsWith("en") ? "🇺🇸" : t.CultureCode.StartsWith("hy") ? "🇦🇲" : t.CultureCode.StartsWith("ru") ? "🇷🇺" : "🌐")</span>
+                            <span>@t.DisplayName</span>
+                            @if (t.IsDefault)
+                            {
+                                <span style="font-size: 0.65rem; background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px;">Default</span>
+                            }
+                        </button>
+                    }
+                </div>
+
+                <!-- Tab Panels for Each Language -->
+                @for (int i = 0; i < Model.Translations.Count; i++)
+                {
+                    var t = Model.Translations[i];
+                    <div class="tab-content-panel @(i == 0 ? "active" : "")" id="tabPanel_@t.CultureCode">
+                        <input type="hidden" name="Translations[@i].LanguageId" value="@t.LanguageId" />
+                        <input type="hidden" name="Translations[@i].CultureCode" value="@t.CultureCode" />
+                        <input type="hidden" name="Translations[@i].DisplayName" value="@t.DisplayName" />
+
+                        <div class="form-group">
+                            <label class="form-label">Title (@t.DisplayName)</label>
+                            <input type="text" name="Translations[@i].Title" id="input_title_@t.CultureCode"
+                                   class="form-control" value="@t.Title" placeholder="Enter localized movie title in @t.DisplayName..." required="@(t.IsDefault ? "required" : null)" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Description / Synopsis (@t.DisplayName)</label>
+                            <textarea name="Translations[@i].Description" id="input_desc_@t.CultureCode"
+                                      class="form-control" placeholder="Enter storyline and summary translated in @t.DisplayName...">@t.Description</textarea>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- FFMPEG MASTER VIDEO UPLOAD ZONE -->
+            <div class="form-group" style="margin-top: 2rem;">
+                <label class="form-label" style="font-size: 1rem; color: #fff;">
+                    @(editMode ? "Replace Master Video (Optional)" : "Master Video Upload (FFmpeg Automated Pipeline)")
+                </label>
+                <div class="file-upload-zone" onclick="document.getElementById('masterVideoInput').click()">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📹</div>
+                    <h4 style="margin-bottom: 0.25rem;">
+                        @(editMode ? "Select New Master Video (.mp4, .mkv, .mov)" : "Select Master Video (.mp4, .mkv, .mov)")
+                    </h4>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 500px; margin: 0 auto;">
+                        @(editMode
+                            ? "Leave empty to keep the existing encoded streams. Selecting a file will stage it and re-run the automated FFmpeg transcoding pipeline."
+                            : "File will be staged at <code style=\"color: var(--accent-cyan);\">/var/www/cinema/media/staging/{id}.mp4</code> and automatically transcoded by Linux FFmpeg worker into <strong>1080p, 720p, 480p, 360p</strong> with poster frame extraction at 00:00:10.")
+                    </p>
+                    <input type="file" name="masterVideo" id="masterVideoInput" accept="video/*" style="display: none;" onchange="updateFileName(this)" />
+                    <div id="selectedFileName" style="margin-top: 0.75rem; color: var(--accent-gold); font-weight: 600; font-size: 0.9rem;"></div>
+                </div>
+            </div>
+
+            <!-- SUBMIT BUTTON -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem;">
+                    <span>✓</span> @(editMode ? "Save Changes" : "Save Movie & Initiate Transcoding")
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function switchLanguageTab(cultureCode) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content-panel').forEach(panel => panel.classList.remove('active'));
+
+            const targetBtn = document.getElementById('tabBtn_' + cultureCode);
+            const targetPanel = document.getElementById('tabPanel_' + cultureCode);
+
+            if (targetBtn) targetBtn.classList.add('active');
+            if (targetPanel) targetPanel.classList.add('active');
+        }
+
+        function updateFileName(input) {
+            const display = document.getElementById('selectedFileName');
+            if (input.files && input.files.length > 0) {
+                const file = input.files[0];
+                const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+                display.innerText = `Selected File: ${file.name} (${sizeMb} MB) - Ready for automated staging and encoding`;
+            } else {
+                display.innerText = '';
+            }
+        }
+
+        async function generateAiContent() {
+            const seedTitle = document.getElementById('aiSeedTitle').value.trim();
+            const hintGenre = document.getElementById('aiHintGenre').value.trim();
+            const alertBox = document.getElementById('aiStatusAlert');
+            const btn = document.getElementById('btnAutoGenerateAi');
+            const btnIcon = document.getElementById('aiBtnIcon');
+            const btnText = document.getElementById('aiBtnText');
+
+            if (!seedTitle) {
+                alertBox.style.display = 'block';
+                alertBox.style.background = 'rgba(244, 63, 94, 0.15)';
+                alertBox.style.border = '1px solid var(--accent-rose)';
+                alertBox.style.color = '#fda4af';
+                alertBox.innerText = 'Please enter a seed movie title to generate AI content.';
+                return;
+            }
+
+            // Loading state
+            btn.disabled = true;
+            btnIcon.innerText = '⏳';
+            btnText.innerText = 'Generating Multilingual Content...';
+            alertBox.style.display = 'block';
+            alertBox.style.background = 'rgba(6, 182, 212, 0.15)';
+            alertBox.style.border = '1px solid var(--accent-cyan)';
+            alertBox.style.color = '#67e8f9';
+            alertBox.innerText = 'AI Engine is enriching metadata and translating across English, Armenian, and Russian...';
+
+            try {
+                const response = await fetch('/api/v1/ai/generate-enrichment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        seedTitle: seedTitle,
+                        hintGenre: hintGenre
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // 1. Populate general settings
+                if (result.suggestedYear) {
+                    document.getElementById('formReleaseYear').value = result.suggestedYear;
+                }
+                if (result.suggestedDurationMinutes) {
+                    document.getElementById('formDuration').value = result.suggestedDurationMinutes;
+                }
+
+                // 2. Populate localized tab fields
+                if (result.translations && result.translations.length > 0) {
+                    result.translations.forEach(tr => {
+                        const titleInput = document.getElementById('input_title_' + tr.cultureCode);
+                        const descInput = document.getElementById('input_desc_' + tr.cultureCode);
+
+                        if (titleInput) {
+                            titleInput.value = tr.title;
+                            flashElement(titleInput);
+                        }
+                        if (descInput) {
+                            descInput.value = tr.description;
+                            flashElement(descInput);
+                        }
+                    });
+                }
+
+                alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
+                alertBox.style.border = '1px solid var(--accent-green)';
+                alertBox.style.color = '#6ee7b7';
+                alertBox.innerHTML = '<strong>Success!</strong> AI generated translations pre-populated across all language tabs. You can freely review and fine-tune any field prior to saving.';
+            } catch (err) {
+                alertBox.style.background = 'rgba(244, 63, 94, 0.15)';
+                alertBox.style.border = '1px solid var(--accent-rose)';
+                alertBox.style.color = '#fda4af';
+                alertBox.innerText = 'Error generating content: ' + err.message;
+            } finally {
+                btn.disabled = false;
+                btnIcon.innerText = '⚡';
+                btnText.innerText = 'Auto-Generate Translations';
+            }
+        }
+
+        function flashElement(el) {
+            el.style.transition = 'box-shadow 0.4s ease, border-color 0.4s ease';
+            el.style.boxShadow = '0 0 15px rgba(6, 182, 212, 0.8)';
+            el.style.borderColor = 'var(--accent-cyan)';
+            setTimeout(() => {
+                el.style.boxShadow = '';
+                el.style.borderColor = '';
+            }, 1200);
+        }
+    </script>
+}

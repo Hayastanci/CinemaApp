@@ -1,0 +1,204 @@
+@model List<CinemaApp.Core.Entities.SupportTicket>
+@{
+    ViewData["Title"] = "Help & Support Tickets";
+    var isAdmin = (bool)(ViewBag.IsAdmin ?? false);
+    var showAdminHelpdesk = (bool)(ViewBag.ShowAdminHelpdesk ?? false);
+    var currentStatus = (string)(ViewBag.CurrentStatus ?? "All");
+    var unansweredCount = (int)(ViewBag.UnansweredCount ?? 0);
+    var unreadCount = (int)(ViewBag.UnreadCount ?? 0);
+}
+
+<div style="max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem;">
+    <!-- Header Banner -->
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <h1 style="margin: 0; font-size: 2rem; font-weight: 800; color: #F8FAFC; letter-spacing: -0.02em;">
+                    @(showAdminHelpdesk ? "🛠️ Admin Helpdesk" : "🎧 Help & Support")
+                </h1>
+                @if (isAdmin && showAdminHelpdesk && unansweredCount > 0)
+                {
+                    <span style="background: linear-gradient(135deg, #EF4444, #DC2626); color: #FFF; font-size: 0.8rem; font-weight: 800; padding: 3px 12px; border-radius: 999px; box-shadow: 0 0 12px rgba(239, 68, 68, 0.6); animation: pulse 2s infinite;">
+                        @unansweredCount Unanswered
+                    </span>
+                }
+            </div>
+            <p style="margin: 6px 0 0; color: #94A3B8; font-size: 0.95rem;">
+                @(showAdminHelpdesk ? "Manage, reply to, and resolve user support requests across the platform." : "Open tickets for playback issues, subtitle requests, or billing inquiries.")
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <a asp-action="Create" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #06B6D4, #0284C7); color: #06080D; font-weight: 700; padding: 11px 22px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 20px rgba(6, 182, 212, 0.4); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                <span>➕</span> Open New Ticket
+            </a>
+        </div>
+    </div>
+
+    <!-- Admin / User Tabs (if user is Admin) -->
+    @if (isAdmin)
+    {
+        <div style="display: flex; gap: 8px; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px;">
+            <a asp-action="Index" asp-route-view="admin" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 0.95rem; text-decoration: none; transition: all 0.2s; @(showAdminHelpdesk ? "background: #06B6D4; color: #06080D;" : "background: rgba(255,255,255,0.06); color: #94A3B8;")">
+                <span>🛠️ Admin Helpdesk (All Users)</span>
+                @if (unansweredCount > 0)
+                {
+                    <span style="background: @(showAdminHelpdesk ? "#06080D" : "#EF4444"); color: @(showAdminHelpdesk ? "#06B6D4" : "#FFF"); font-size: 0.75rem; padding: 1px 7px; border-radius: 999px; font-weight: 800;">@unansweredCount</span>
+                }
+            </a>
+            <a asp-action="Index" asp-route-view="my" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 0.95rem; text-decoration: none; transition: all 0.2s; @(!showAdminHelpdesk ? "background: #06B6D4; color: #06080D;" : "background: rgba(255,255,255,0.06); color: #94A3B8;")">
+                <span>👤 My Personal Tickets</span>
+            </a>
+        </div>
+    }
+
+    <!-- Status Filters -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem;">
+        @{
+            var viewParam = showAdminHelpdesk ? "admin" : "my";
+        }
+        <a asp-action="Index" asp-route-view="@viewParam" asp-route-status="All" style="padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; @(currentStatus == "All" ? "background: rgba(6,182,212,0.2); color: #06B6D4; border: 1px solid #06B6D4;" : "background: rgba(255,255,255,0.05); color: #94A3B8; border: 1px solid transparent;")">
+            All Tickets
+        </a>
+
+        @if (showAdminHelpdesk)
+        {
+            <a asp-action="Index" asp-route-view="@viewParam" asp-route-status="Unanswered" style="padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; @(currentStatus == "Unanswered" ? "background: rgba(239,68,68,0.25); color: #F87171; border: 1px solid #EF4444;" : "background: rgba(255,255,255,0.05); color: #94A3B8; border: 1px solid transparent;")">
+                ⚠️ Needs Reply @(unansweredCount > 0 ? $"({unansweredCount})" : "")
+            </a>
+        }
+
+        <a asp-action="Index" asp-route-view="@viewParam" asp-route-status="Open" style="padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; @(currentStatus == "Open" ? "background: rgba(16,185,129,0.2); color: #34D399; border: 1px solid #10B981;" : "background: rgba(255,255,255,0.05); color: #94A3B8; border: 1px solid transparent;")">
+            Open
+        </a>
+        <a asp-action="Index" asp-route-view="@viewParam" asp-route-status="InProgress" style="padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; @(currentStatus == "InProgress" ? "background: rgba(6,182,212,0.2); color: #22D3EE; border: 1px solid #06B6D4;" : "background: rgba(255,255,255,0.05); color: #94A3B8; border: 1px solid transparent;")">
+            In Progress
+        </a>
+        <a asp-action="Index" asp-route-view="@viewParam" asp-route-status="Resolved" style="padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; @(currentStatus == "Resolved" ? "background: rgba(245,158,11,0.2); color: #FBBF24; border: 1px solid #F59E0B;" : "background: rgba(255,255,255,0.05); color: #94A3B8; border: 1px solid transparent;")">
+            Resolved
+        </a>
+        <a asp-action="Index" asp-route-view="@viewParam" asp-route-status="Closed" style="padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; @(currentStatus == "Closed" ? "background: rgba(148,163,184,0.2); color: #CBD5E1; border: 1px solid #64748B;" : "background: rgba(255,255,255,0.05); color: #94A3B8; border: 1px solid transparent;")">
+            Closed
+        </a>
+    </div>
+
+    <!-- Ticket List -->
+    @if (Model == null || !Model.Any())
+    {
+        <div style="background: rgba(18, 23, 37, 0.7); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 16px; padding: 3rem; text-align: center;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">📭</div>
+            <h3 style="margin: 0; color: #F8FAFC; font-size: 1.2rem;">No support tickets found</h3>
+            <p style="color: #94A3B8; margin: 8px 0 1.5rem; font-size: 0.95rem;">
+                @(showAdminHelpdesk ? "There are no tickets matching this filter." : "You haven't opened any support requests yet.")
+            </p>
+            <a asp-action="Create" style="display: inline-flex; align-items: center; gap: 8px; background: #06B6D4; color: #06080D; font-weight: 700; padding: 10px 20px; border-radius: 10px; text-decoration: none;">
+                Open a Ticket
+            </a>
+        </div>
+    }
+    else
+    {
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            @foreach (var ticket in Model)
+            {
+                var isStaffReply = ticket.LastReplyByRole == CinemaApp.Core.Entities.UserRole.Admin;
+                var hasUnreadReply = ticket.HasUnreadStaffReply && !showAdminHelpdesk;
+                var needsAdminReply = ticket.HasUnreadUserReply && showAdminHelpdesk && ticket.Status != "Closed" && ticket.Status != "Resolved";
+
+                <a asp-action="Details" asp-route-id="@ticket.Id" style="text-decoration: none; color: inherit;">
+                    <div style="background: rgba(18, 24, 38, 0.85); border: 1px solid @(hasUnreadReply || needsAdminReply ? "rgba(6, 182, 212, 0.6)" : "rgba(255, 255, 255, 0.1)"); border-radius: 16px; padding: 1.25rem 1.5rem; transition: all 0.2s ease; position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.borderColor='#06B6D4';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='@(hasUnreadReply || needsAdminReply ? "rgba(6, 182, 212, 0.6)" : "rgba(255, 255, 255, 0.1)")';">
+                        
+                        <!-- Accent bar on left edge -->
+                        <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: @(ticket.Status switch {
+                            "Open" => "#10B981",
+                            "InProgress" => "#06B6D4",
+                            "Resolved" => "#F59E0B",
+                            _ => "#64748B"
+                        });"></div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                            <!-- Header Info -->
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <span style="font-size: 0.85rem; font-weight: 800; color: #64748B;">#@ticket.Id</span>
+
+                                <!-- Status Badge -->
+                                <span style="font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 6px; letter-spacing: 0.04em; text-transform: uppercase; @(ticket.Status switch {
+                                    "Open" => "background: rgba(16,185,129,0.15); color: #34D399; border: 1px solid rgba(16,185,129,0.3);",
+                                    "InProgress" => "background: rgba(6,182,212,0.15); color: #22D3EE; border: 1px solid rgba(6,182,212,0.3);",
+                                    "Resolved" => "background: rgba(245,158,11,0.15); color: #FBBF24; border: 1px solid rgba(245,158,11,0.3);",
+                                    _ => "background: rgba(148,163,184,0.15); color: #94A3B8; border: 1px solid rgba(148,163,184,0.3);"
+                                })">
+                                    @ticket.Status
+                                </span>
+
+                                <!-- Priority -->
+                                @if (ticket.Priority == "Urgent")
+                                {
+                                    <span style="font-size: 0.7rem; font-weight: 800; background: rgba(239,68,68,0.2); color: #F87171; padding: 2px 7px; border-radius: 4px;">⚡ URGENT</span>
+                                }
+                                else if (ticket.Priority == "High")
+                                {
+                                    <span style="font-size: 0.7rem; font-weight: 700; background: rgba(245,158,11,0.2); color: #FBBF24; padding: 2px 7px; border-radius: 4px;">HIGH</span>
+                                }
+
+                                <!-- Category -->
+                                <span style="font-size: 0.75rem; color: #94A3B8; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 6px;">
+                                    🏷️ @ticket.Category
+                                </span>
+
+                                <!-- User email for Admin -->
+                                @if (showAdminHelpdesk)
+                                {
+                                    <span style="font-size: 0.8rem; color: #CBD5E1; font-weight: 600;">
+                                        👤 @ticket.UserEmail
+                                    </span>
+                                }
+                            </div>
+
+                            <!-- Notification Markers -->
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                @if (hasUnreadReply)
+                                {
+                                    <span style="background: linear-gradient(135deg, #06B6D4, #3B82F6); color: #FFF; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; box-shadow: 0 0 10px rgba(6,182,212,0.5);">
+                                        ★ NEW STAFF REPLY
+                                    </span>
+                                }
+                                @if (needsAdminReply)
+                                {
+                                    <span style="background: linear-gradient(135deg, #EF4444, #DC2626); color: #FFF; font-size: 0.7rem; font-weight: 800; padding: 3px 9px; border-radius: 999px;">
+                                        ⚠️ AWAITING STAFF RESPONSE
+                                    </span>
+                                }
+                                <span style="font-size: 0.8rem; color: #64748B;">
+                                    @ticket.UpdatedAt.ToString("MMM dd, HH:mm")
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Ticket Subject -->
+                        <h2 style="margin: 10px 0 8px; font-size: 1.15rem; font-weight: 700; color: #F8FAFC;">
+                            @ticket.Subject
+                        </h2>
+
+                        <!-- Short Answer / Reply Preview Box -->
+                        @if (!string.IsNullOrEmpty(ticket.LastMessagePreview))
+                        {
+                            <div style="margin-top: 8px; background: rgba(10, 14, 23, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 8px 12px; display: flex; align-items: flex-start; gap: 8px;">
+                                <span style="font-size: 0.95rem; flex-shrink: 0;">@(isStaffReply ? "🛡️" : "💬")</span>
+                                <div style="font-size: 0.85rem; color: @(isStaffReply ? "#A5F3FC" : "#CBD5E1"); line-height: 1.4;">
+                                    <strong style="color: @(isStaffReply ? "#38BDF8" : "#94A3B8");">@(isStaffReply ? "Support Reply: " : "Latest message: ")</strong>
+                                    “@ticket.LastMessagePreview”
+                                </div>
+                            </div>
+                        }
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; font-size: 0.8rem; color: #64748B;">
+                            <span>💬 @(ticket.Messages?.Count ?? 0) messages</span>
+                            <span style="color: #06B6D4; font-weight: 600;">View Thread →</span>
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>

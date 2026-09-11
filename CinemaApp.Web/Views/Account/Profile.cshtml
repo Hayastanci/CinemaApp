@@ -1,0 +1,111 @@
+@model CinemaApp.Core.Entities.User
+@{
+    ViewData["Title"] = "User Profile";
+    var userEmail = Model?.Email ?? "User";
+    var userName = userEmail.Split('@')[0];
+    var isSub = Model?.IsSubscribed == true;
+    var isAdmin = Model?.Role == CinemaApp.Core.Entities.UserRole.Admin;
+    var ticketCount = (int)(ViewBag.TicketCount ?? 0);
+    var openTicketCount = (int)(ViewBag.OpenTicketCount ?? 0);
+}
+
+<div style="max-width: 960px; margin: 2rem auto; padding: 0 1.5rem;">
+    <!-- Profile Banner Card -->
+    <div style="background: linear-gradient(135deg, rgba(18, 24, 38, 0.95), rgba(10, 14, 23, 0.98)); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 2.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.5); backdrop-filter: blur(20px); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -60px; right: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(6,182,212,0.18), transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; position: relative; z-index: 1;">
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                <!-- Avatar Circle -->
+                <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #06B6D4, #3B82F6); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 800; color: #FFF; box-shadow: 0 0 25px rgba(6, 182, 212, 0.5); border: 3px solid rgba(255,255,255,0.2);">
+                    @(userName.Length > 0 ? userName.Substring(0, 1).ToUpperInvariant() : "U")
+                </div>
+
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <h1 style="margin: 0; font-size: 1.8rem; font-weight: 800; color: #F8FAFC; letter-spacing: -0.02em;">@userName</h1>
+                        @if (isAdmin)
+                        {
+                            <span style="background: linear-gradient(135deg, #EF4444, #B91C1C); color: #FFF; font-size: 0.75rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.05em;">ADMIN</span>
+                        }
+                        @if (isSub)
+                        {
+                            <span style="background: linear-gradient(135deg, #F59E0B, #D97706); color: #06080D; font-size: 0.75rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.05em;">⭐ PRO VIP</span>
+                        }
+                        else
+                        {
+                            <span style="background: rgba(100, 116, 139, 0.3); color: #CBD5E1; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px;">FREE TIER</span>
+                        }
+                    </div>
+                    <p style="margin: 6px 0 0; color: #94A3B8; font-size: 0.95rem;">@userEmail</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a asp-controller="Support" asp-action="Create" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #06B6D4, #0284C7); color: #06080D; font-weight: 700; padding: 10px 20px; border-radius: 12px; text-decoration: none; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <span>➕</span> Open Support Ticket
+                </a>
+                <a asp-controller="Support" asp-action="Index" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.08); color: #F8FAFC; font-weight: 600; padding: 10px 18px; border-radius: 12px; text-decoration: none; border: 1px solid rgba(255, 255, 255, 0.15); transition: background 0.2s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.15)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.08)'">
+                    <span>🎧</span> Help & Tickets
+                </a>
+                <a asp-controller="Account" asp-action="Logout" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(244, 63, 94, 0.14); color: #FDA4AF; font-weight: 600; padding: 10px 16px; border-radius: 12px; text-decoration: none; border: 1px solid rgba(244, 63, 94, 0.3);">
+                    <span>🚪</span> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-top: 1.5rem;">
+        <!-- Subscription Status -->
+        <div style="background: rgba(18, 23, 37, 0.9); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem;">
+            <span style="font-size: 0.8rem; text-transform: uppercase; color: #94A3B8; font-weight: 700; letter-spacing: 0.05em;">Streaming Tier</span>
+            <div style="font-size: 1.3rem; font-weight: 800; color: @(isSub ? "#F59E0B" : "#F8FAFC"); margin-top: 6px;">
+                @(isSub ? "Cinema Pro VIP (1080p FHD)" : "Free Standard (480p)")
+            </div>
+            @if (!isSub)
+            {
+                <a asp-controller="Account" asp-action="Subscription" style="display: inline-block; margin-top: 10px; font-size: 0.85rem; color: #06B6D4; font-weight: 600; text-decoration: none;">Upgrade to Pro →</a>
+            }
+        </div>
+
+        <!-- Open Tickets -->
+        <div style="background: rgba(18, 23, 37, 0.9); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem;">
+            <span style="font-size: 0.8rem; text-transform: uppercase; color: #94A3B8; font-weight: 700; letter-spacing: 0.05em;">Open Support Tickets</span>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #06B6D4; margin-top: 6px;">
+                @openTicketCount
+            </div>
+            <a asp-controller="Support" asp-action="Index" style="display: inline-block; margin-top: 6px; font-size: 0.85rem; color: #94A3B8; text-decoration: none;">View active tickets →</a>
+        </div>
+
+        <!-- Total Tickets -->
+        <div style="background: rgba(18, 23, 37, 0.9); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem;">
+            <span style="font-size: 0.8rem; text-transform: uppercase; color: #94A3B8; font-weight: 700; letter-spacing: 0.05em;">Total Requests</span>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #F8FAFC; margin-top: 6px;">
+                @ticketCount
+            </div>
+            <span style="font-size: 0.85rem; color: #64748B;">Lifetime tickets opened</span>
+        </div>
+
+        <!-- Member Since -->
+        <div style="background: rgba(18, 23, 37, 0.9); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.5rem;">
+            <span style="font-size: 0.8rem; text-transform: uppercase; color: #94A3B8; font-weight: 700; letter-spacing: 0.05em;">Member Since</span>
+            <div style="font-size: 1.2rem; font-weight: 700; color: #F8FAFC; margin-top: 6px;">
+                @(Model?.CreatedAt.ToString("MMMM yyyy") ?? "2026")
+            </div>
+            <span style="font-size: 0.85rem; color: #10B981;">● Account in good standing</span>
+        </div>
+    </div>
+
+    <!-- Quick Help & Support Card -->
+    <div style="margin-top: 2rem; background: rgba(18, 23, 37, 0.7); border: 1px dashed rgba(6, 182, 212, 0.3); border-radius: 16px; padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h3 style="margin: 0; font-size: 1.1rem; color: #F8FAFC;">Need assistance with playback, subtitles, or billing?</h3>
+            <p style="margin: 4px 0 0; color: #94A3B8; font-size: 0.9rem;">Our support team is active 24/7 to resolve any issues with your streaming experience.</p>
+        </div>
+        <a asp-controller="Support" asp-action="Create" style="background: #06B6D4; color: #06080D; font-weight: 700; padding: 9px 18px; border-radius: 10px; text-decoration: none;">
+            Contact Support
+        </a>
+    </div>
+</div>

@@ -1,0 +1,141 @@
+@model CinemaApp.Web.Models.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Management Console";
+}
+
+<div class="content-wrapper" style="padding-top: 2rem;">
+    <div class="admin-header">
+        <div>
+            <h1 style="font-size: 2.25rem; margin-bottom: 0.25rem;">Enterprise Media Operations</h1>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Manage movies, dynamic languages, and automated FFmpeg video transcoding pipelines.</p>
+        </div>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a asp-action="CreateMovie" class="btn btn-primary">
+                <span>🤖</span> Add Movie (AI Multilingual)
+            </a>
+            <a asp-action="Categories" class="btn btn-secondary">
+                <span>🏷️</span> Categories (@Model.TotalCategories)
+            </a>
+            <a asp-action="Languages" class="btn btn-secondary">
+                <span>🌐</span> Active Languages (@Model.ActiveLanguagesCount)
+            </a>
+            <a asp-controller="Support" asp-action="Index" asp-route-view="admin" class="btn btn-secondary" style="border-color: rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.12); color: #FCA5A5;">
+                <span>🛠️</span> Helpdesk (@Model.OpenTicketsCount)
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon cyan">🎬</div>
+            <div>
+                <div class="stat-val">@Model.TotalMovies</div>
+                <div class="stat-label">Catalog Movies</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon purple">⚡</div>
+            <div>
+                <div class="stat-val">@Model.TotalStreams</div>
+                <div class="stat-label">Transcoded Streams</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon green">🌐</div>
+            <div>
+                <div class="stat-val">@Model.ActiveLanguagesCount</div>
+                <div class="stat-label">Supported Languages</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon blue">🏷️</div>
+            <div>
+                <div class="stat-val">@Model.TotalCategories</div>
+                <div class="stat-label">Categories</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon gold">⭐</div>
+            <div>
+                <div class="stat-val">@Model.TotalSubscribers</div>
+                <div class="stat-label">Pro Subscribers</div>
+            </div>
+        </div>
+
+        <a asp-controller="Support" asp-action="Index" asp-route-view="admin" style="text-decoration: none; color: inherit;">
+            <div class="stat-card" style="cursor: pointer; border-color: @(Model.UnansweredTicketsCount > 0 ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.1)"); transition: transform 0.2s, border-color 0.2s;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#EF4444';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='@(Model.UnansweredTicketsCount > 0 ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.1)")';">
+                <div class="stat-icon red" style="background: rgba(239, 68, 68, 0.15); color: #F87171;">🛠️</div>
+                <div>
+                    <div class="stat-val" style="color: @(Model.UnansweredTicketsCount > 0 ? "#F87171" : "#F8FAFC");">@Model.OpenTicketsCount</div>
+                    <div class="stat-label">Support Tickets @(Model.UnansweredTicketsCount > 0 ? $"({Model.UnansweredTicketsCount} need reply)" : "")</div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Recent Movies Table -->
+    <div class="admin-card">
+        <h2 style="font-size: 1.4rem; margin-bottom: 1.5rem;">Movie Catalog & Streams</h2>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                        <th style="padding: 0.75rem 1rem;">ID</th>
+                        <th style="padding: 0.75rem 1rem;">Poster</th>
+                        <th style="padding: 0.75rem 1rem;">Title</th>
+                        <th style="padding: 0.75rem 1rem;">Year</th>
+                        <th style="padding: 0.75rem 1rem;">Duration</th>
+                        <th style="padding: 0.75rem 1rem;">Available Streams</th>
+                        <th style="padding: 0.75rem 1rem; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.RecentMovies)
+                    {
+                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04);">
+                            <td style="padding: 1rem; color: var(--text-dim); font-weight: 700;">#@m.Id</td>
+                            <td style="padding: 1rem;">
+                                <img src="@(m.PosterUrl ?? MediaUrls.FallbackPoster)" style="width: 48px; height: 68px; object-fit: cover; border-radius: 4px;"
+                                     onerror="this.onerror=null; this.src='@MediaUrls.FallbackPoster';" />
+                            </td>
+                            <td style="padding: 1rem; font-weight: 600;">@m.Title</td>
+                            <td style="padding: 1rem; color: var(--text-muted);">@m.ReleaseYear</td>
+                            <td style="padding: 1rem; color: var(--text-muted);">@m.DurationMinutes min</td>
+                            <td style="padding: 1rem;">
+                                <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                                    @foreach (var q in m.AvailableQualities)
+                                    {
+                                        <span style="background: rgba(6, 182, 212, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                                            @q
+                                        </span>
+                                    }
+                                </div>
+                            </td>
+                            <td style="padding: 1rem; text-align: right;">
+                                <a asp-controller="Home" asp-action="Watch" asp-route-id="@m.Id" class="btn btn-secondary btn-sm" target="_blank">
+                                    <span>▶</span> Preview
+                                </a>
+                                <a asp-action="EditMovie" asp-route-id="@m.Id" class="btn btn-primary btn-sm">
+                                    <span>✏️</span> Edit
+                                </a>
+                                <form asp-action="DeleteMovie" method="post" style="display: inline;"
+                                      onsubmit="return confirm('Delete movie &quot;@m.Title&quot; #@m.Id? All streams, translations and ratings will be removed.');">
+                                    <input type="hidden" name="id" value="@m.Id" />
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <span>🗑️</span> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

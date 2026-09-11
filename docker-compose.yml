@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # MySQL 8.4 LTS Database
+  cinema-db:
+    image: mysql:8.4
+    container_name: cinema_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secure_pass_2026
+      MYSQL_DATABASE: cinema_db
+      MYSQL_USER: cinema_user
+      MYSQL_PASSWORD: cinema_secure_password_2026
+    ports:
+      - "3306:3306"
+    volumes:
+      - cinema_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "cinema_user", "-pcinema_secure_password_2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cinema-network
+
+  # ASP.NET Core 10 Web App + FFmpeg Background Transcoder
+  cinema-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cinema_web
+    restart: always
+    depends_on:
+      cinema-db:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=cinema-db;Port=3306;Database=cinema_db;User=cinema_user;Password=cinema_secure_password_2026;CharSet=utf8mb4;
+      - FFmpeg__BinaryPath=/usr/bin/ffmpeg
+      - FFmpeg__ProbePath=/usr/bin/ffprobe
+      - FFmpeg__MediaRoot=/var/www/cinema/media
+      - FFmpeg__StagingPath=/var/www/cinema/media/staging
+      - FFmpeg__MoviesPath=/var/www/cinema/media/movies
+      - Jwt__Key=CinemaApp_Ultra_Secure_Secret_Key_For_Net10_Cinema_App_2026!
+      - Jwt__Issuer=CinemaApp
+      - Jwt__Audience=CinemaAppClient
+      - Stripe__PublishableKey=pk_test_sample
+      - Stripe__SecretKey=sk_test_sample
+      - Stripe__WebhookSecret=whsec_sample
+    ports:
+      - "8080:8080"
+    volumes:
+      - cinema_media_data:/var/www/cinema/media
+    networks:
+      - cinema-network
+
+volumes:
+  cinema_mysql_data:
+  cinema_media_data:
+
+networks:
+  cinema-network:
+    driver: bridge

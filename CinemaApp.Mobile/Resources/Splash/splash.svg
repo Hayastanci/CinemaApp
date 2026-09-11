@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="456" height="456" viewBox="0 0 456 456" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="45%" r="60%">
+      <stop offset="0%"   stop-color="#0D1829"/>
+      <stop offset="100%" stop-color="#060A12"/>
+    </radialGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#FDE68A"/>
+      <stop offset="40%"  stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="456" height="456" fill="url(#bgGrad)"/>
+
+  <!-- Eagle silhouette (simplified for splash) -->
+  <!-- Wings -->
+  <path d="M228,200 C200,195 160,175 118,160 C148,172 168,182 180,195 L228,200Z"
+        fill="url(#goldGrad)" opacity="0.9"/>
+  <path d="M228,200 C256,195 296,175 338,160 C308,172 288,182 276,195 L228,200Z"
+        fill="url(#goldGrad)" opacity="0.9"/>
+  <!-- Reel body -->
+  <circle cx="228" cy="225" r="48" fill="url(#goldGrad)"/>
+  <circle cx="228" cy="225" r="40" fill="#0D1829"/>
+  <circle cx="228" cy="225" r="9"  fill="url(#goldGrad)"/>
+  <circle cx="228" cy="198" r="8" fill="#060A12" stroke="#F59E0B" stroke-width="2.5"/>
+  <circle cx="251" cy="212" r="8" fill="#060A12" stroke="#F59E0B" stroke-width="2.5"/>
+  <circle cx="244" cy="240" r="8" fill="#060A12" stroke="#F59E0B" stroke-width="2.5"/>
+  <circle cx="212" cy="240" r="8" fill="#060A12" stroke="#F59E0B" stroke-width="2.5"/>
+  <circle cx="205" cy="212" r="8" fill="#060A12" stroke="#F59E0B" stroke-width="2.5"/>
+  <!-- Head -->
+  <ellipse cx="232" cy="168" rx="18" ry="15" fill="url(#goldGrad)"/>
+  <path d="M246,166 L260,172 L246,177 Z" fill="#B45309"/>
+
+  <!-- Cyan film strip arc -->
+  <path d="M 80,310 Q 228,278 376,310" stroke="#06B6D4" stroke-width="8"
+        fill="none" opacity="0.9" stroke-linecap="round"/>
+  <path d="M 80,310 Q 228,278 376,310" stroke="#06B6D4" stroke-width="22"
+        fill="none" opacity="0.15" stroke-linecap="round"/>
+</svg>

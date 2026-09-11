@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CinemaApp.Mobile.Views.NewTicketPage"
+             Title="Open Support Ticket"
+             BackgroundColor="#06080D">
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="16">
+            <Label Text="Create Support Ticket"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   TextColor="#F8FAFC" />
+            <Label Text="Describe your playback, billing, or technical issue and our staff will respond."
+                   FontSize="13"
+                   TextColor="#94A3B8" />
+
+            <!-- Subject -->
+            <Label Text="Subject / Title"
+                   FontSize="13"
+                   FontAttributes="Bold"
+                   TextColor="#CBD5E1" />
+            <Border BackgroundColor="#121725"
+                    Stroke="#1E2638"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="12,4">
+                <Entry x:Name="SubjectEntry"
+                       Placeholder="e.g., Movie audio sync or subtitle request"
+                       TextColor="#F8FAFC"
+                       PlaceholderColor="#64748B"
+                       BackgroundColor="Transparent" />
+            </Border>
+
+            <!-- Category -->
+            <Label Text="Category"
+                   FontSize="13"
+                   FontAttributes="Bold"
+                   TextColor="#CBD5E1" />
+            <Border BackgroundColor="#121725"
+                    Stroke="#1E2638"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="12,0">
+                <Picker x:Name="CategoryPicker"
+                        TextColor="#F8FAFC"
+                        Title="Select Category"
+                        TitleColor="#64748B">
+                    <Picker.ItemsSource>
+                        <x:Array Type="{x:Type x:String}">
+                            <x:String>Streaming &amp; Playback</x:String>
+                            <x:String>Technical / Bug</x:String>
+                            <x:String>Billing &amp; Subscription</x:String>
+                            <x:String>Movie Request</x:String>
+                            <x:String>General Inquiry</x:String>
+                        </x:Array>
+                    </Picker.ItemsSource>
+                </Picker>
+            </Border>
+
+            <!-- Priority -->
+            <Label Text="Priority"
+                   FontSize="13"
+                   FontAttributes="Bold"
+                   TextColor="#CBD5E1" />
+            <Border BackgroundColor="#121725"
+                    Stroke="#1E2638"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="12,0">
+                <Picker x:Name="PriorityPicker"
+                        TextColor="#F8FAFC"
+                        Title="Select Priority"
+                        TitleColor="#64748B">
+                    <Picker.ItemsSource>
+                        <x:Array Type="{x:Type x:String}">
+                            <x:String>Normal</x:String>
+                            <x:String>High</x:String>
+                            <x:String>Urgent</x:String>
+                        </x:Array>
+                    </Picker.ItemsSource>
+                </Picker>
+            </Border>
+
+            <!-- Message -->
+            <Label Text="Description / Details"
+                   FontSize="13"
+                   FontAttributes="Bold"
+                   TextColor="#CBD5E1" />
+            <Border BackgroundColor="#121725"
+                    Stroke="#1E2638"
+                    StrokeShape="RoundRectangle 8"
+                    Padding="12,8">
+                <Editor x:Name="MessageEditor"
+                        Placeholder="Please describe your issue in detail..."
+                        HeightRequest="120"
+                        TextColor="#F8FAFC"
+                        PlaceholderColor="#64748B"
+                        BackgroundColor="Transparent" />
+            </Border>
+
+            <!-- Error Label -->
+            <Label x:Name="ErrorLabel"
+                   TextColor="#F43F5E"
+                   FontSize="12"
+                   IsVisible="False" />
+
+            <!-- Buttons -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,12,0,0">
+                <Button Text="Cancel"
+                        Clicked="OnCancelClicked"
+                        BackgroundColor="#1E2638"
+                        TextColor="#94A3B8"
+                        FontAttributes="Bold"
+                        CornerRadius="8"
+                        HeightRequest="46" />
+                <Button Grid.Column="1"
+                        x:Name="SubmitButton"
+                        Text="Submit Ticket"
+                        Clicked="OnSubmitClicked"
+                        BackgroundColor="#06B6D4"
+                        TextColor="#06080D"
+                        FontAttributes="Bold"
+                        CornerRadius="8"
+                        HeightRequest="46" />
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

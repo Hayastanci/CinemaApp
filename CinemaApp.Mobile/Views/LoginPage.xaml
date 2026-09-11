@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:CinemaApp.Mobile.ViewModels"
+             xmlns:dtos="clr-namespace:CinemaApp.Core.DTOs;assembly=CinemaApp.Core"
+             xmlns:conv="clr-namespace:CinemaApp.Mobile.Converters"
+             x:Class="CinemaApp.Mobile.Views.LoginPage"
+             x:DataType="vm:LoginViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="#06080D">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
+            <conv:InvertedBoolToColorConverter x:Key="InvertedBoolToColorConverter" />
+            <conv:InvertedBoolToTextColorConverter x:Key="InvertedBoolToTextColorConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <Grid VerticalOptions="Fill" Padding="16">
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- SIGNED IN VIEW: User Profile, Support Tickets & Helpdesk    -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <VerticalStackLayout IsVisible="{Binding IsAuthenticated}" Spacing="16">
+
+                <!-- Profile Header Card with Bell -->
+                <Border BackgroundColor="#121725"
+                        Stroke="#1E2638"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="20">
+                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                        
+                        <!-- User Info -->
+                        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4">
+                            <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                <Image Source="bartigran_logo.png"
+                                       HeightRequest="36"
+                                       WidthRequest="36"
+                                       Aspect="AspectFit" />
+                                <Label Text="BARTIGRAN MOVIE"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="#06B6D4"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
+
+                            <Label Text="{Binding UserName}"
+                                   FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="#F8FAFC"
+                                   Margin="0,4,0,0" />
+                            <Label Text="{Binding UserEmail}"
+                                   FontSize="12"
+                                   TextColor="#94A3B8" />
+
+                            <Border BackgroundColor="#141A29"
+                                    Stroke="#06B6D4"
+                                    StrokeShape="RoundRectangle 8"
+                                    Padding="10,4"
+                                    HorizontalOptions="Start"
+                                    Margin="0,6,0,0">
+                                <Label Text="{Binding SubscriptionTier}"
+                                       FontSize="11"
+                                       FontAttributes="Bold"
+                                       TextColor="#F59E0B" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Notification Bell (Top Right) -->
+                        <Grid Grid.Row="0" Grid.Column="1" VerticalOptions="Start">
+                            <Button Text="🔔"
+                                    Command="{Binding ToggleNotificationsCommand}"
+                                    BackgroundColor="#1E2638"
+                                    TextColor="#F8FAFC"
+                                    FontSize="18"
+                                    HeightRequest="44"
+                                    WidthRequest="44"
+                                    CornerRadius="22"
+                                    Padding="0" />
+                            <Border IsVisible="{Binding HasUnreadNotifs}"
+                                    BackgroundColor="#EF4444"
+                                    StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 9"
+                                    WidthRequest="18"
+                                    HeightRequest="18"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Start"
+                                    Margin="0,-2,-2,0">
+                                <Label Text="{Binding UnreadNotifCount}"
+                                       FontSize="10"
+                                       FontAttributes="Bold"
+                                       TextColor="#FFFFFF"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                            </Border>
+                        </Grid>
+
+                        <!-- Notifications Drawer (Collapsible) -->
+                        <Border Grid.Row="1" Grid.ColumnSpan="2"
+                                IsVisible="{Binding IsNotificationsVisible}"
+                                BackgroundColor="#0B0F19"
+                                Stroke="#06B6D4"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="12"
+                                Margin="0,12,0,0">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="Recent Notifications"
+                                       FontSize="13"
+                                       FontAttributes="Bold"
+                                       TextColor="#F8FAFC" />
+                                <CollectionView ItemsSource="{Binding RecentNotifications}">
+                                    <CollectionView.ItemTemplate>
+                                        <DataTemplate x:DataType="dtos:NotificationDto">
+                                            <Border BackgroundColor="#141A29"
+                                                    StrokeThickness="0"
+                                                    StrokeShape="RoundRectangle 8"
+                                                    Padding="10,8"
+                                                    Margin="0,0,0,6">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LoginViewModel}}, Path=NotificationTappedCommand}"
+                                                                          CommandParameter="{Binding .}" />
+                                                </Border.GestureRecognizers>
+                                                <VerticalStackLayout Spacing="2">
+                                                    <Label Text="{Binding Title}"
+                                                           FontSize="12"
+                                                           FontAttributes="Bold"
+                                                           TextColor="#38BDF8" />
+                                                    <Label Text="{Binding ShortMessage}"
+                                                           FontSize="11"
+                                                           TextColor="#94A3B8"
+                                                           LineBreakMode="TailTruncation" />
+                                                </VerticalStackLayout>
+                                            </Border>
+                                        </DataTemplate>
+                                    </CollectionView.ItemTemplate>
+                                </CollectionView>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Admin Tabs (if Admin user) -->
+                <Grid IsVisible="{Binding IsAdmin}" ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <Button Text="My Tickets"
+                            Command="{Binding SwitchTabCommand}"
+                            CommandParameter="my"
+                            BackgroundColor="{Binding IsAdminHelpdeskTab, Converter={StaticResource InvertedBoolToColorConverter}, FallbackValue='#06B6D4'}"
+                            TextColor="{Binding IsAdminHelpdeskTab, Converter={StaticResource InvertedBoolToTextColorConverter}, FallbackValue='#06080D'}"
+                            FontAttributes="Bold"
+                            HeightRequest="40"
+                            CornerRadius="8" />
+
+                    <Button Grid.Column="1"
+                            Text="{Binding UnansweredCount, StringFormat='🛠️ Helpdesk ({0})'}"
+                            Command="{Binding SwitchTabCommand}"
+                            CommandParameter="admin"
+                            BackgroundColor="#1E2638"
+                            TextColor="#F8FAFC"
+                            FontAttributes="Bold"
+                            HeightRequest="40"
+                            CornerRadius="8" />
+                </Grid>
+
+                <!-- Client Summary Stat Cards: Opened & Total Tickets -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" Margin="0,2,0,2">
+                    <!-- Open Tickets -->
+                    <Border BackgroundColor="#121725"
+                            Stroke="#1E2638"
+                            StrokeShape="RoundRectangle 12"
+                            Padding="14,12">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="OPEN TICKETS"
+                                   FontSize="10"
+                                   FontAttributes="Bold"
+                                   TextColor="#06B6D4"
+                                   CharacterSpacing="0.5" />
+                            <Label Text="{Binding OpenTicketsCount}"
+                                   FontSize="24"
+                                   FontAttributes="Bold"
+                                   TextColor="#22D3EE" />
+                            <Label Text="Active &amp; in progress"
+                                   FontSize="10"
+                                   TextColor="#64748B" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Total Tickets -->
+                    <Border Grid.Column="1"
+                            BackgroundColor="#121725"
+                            Stroke="#1E2638"
+                            StrokeShape="RoundRectangle 12"
+                            Padding="14,12">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="TOTAL TICKETS"
+                                   FontSize="10"
+                                   FontAttributes="Bold"
+                                   TextColor="#94A3B8"
+                                   CharacterSpacing="0.5" />
+                            <Label Text="{Binding TotalTicketsCount}"
+                                   FontSize="24"
+                                   FontAttributes="Bold"
+                                   TextColor="#F8FAFC" />
+                            <Label Text="All submissions"
+                                   FontSize="10"
+                                   TextColor="#64748B" />
+                        </VerticalStackLayout>
+                    </Border>
+                </Grid>
+
+                <!-- Support Ticket Section Header -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <VerticalStackLayout VerticalOptions="Center">
+                        <Label Text="Support &amp; Help Desk"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               TextColor="#F8FAFC" />
+                        <Label Text="Track ticket status &amp; staff replies"
+                               FontSize="11"
+                               TextColor="#64748B" />
+                    </VerticalStackLayout>
+
+                    <!-- Open Ticket Button -->
+                    <Button Grid.Column="1"
+                            Text="➕ New Ticket"
+                            Command="{Binding OpenNewTicketCommand}"
+                            BackgroundColor="#06B6D4"
+                            TextColor="#06080D"
+                            FontAttributes="Bold"
+                            CornerRadius="8"
+                            HeightRequest="38"
+                            Padding="12,0" />
+                </Grid>
+
+                <!-- Status Filter Chips & Sort Controls -->
+                <VerticalStackLayout Spacing="8">
+                    <!-- Sorting Order Bar -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Text="{Binding SelectedStatus, StringFormat='Showing: {0}'}"
+                               FontSize="12"
+                               FontAttributes="Bold"
+                               TextColor="#94A3B8"
+                               VerticalOptions="Center" />
+
+                        <!-- Toggle Sort Button -->
+                        <Button Grid.Column="1"
+                                Text="{Binding CurrentSortLabel, StringFormat='🔃 {0}'}"
+                                Command="{Binding ToggleSortOrderCommand}"
+                                BackgroundColor="#141A29"
+                                TextColor="#06B6D4"
+                                FontSize="11"
+                                FontAttributes="Bold"
+                                HeightRequest="32"
+                                Padding="10,0"
+                                CornerRadius="6" />
+                    </Grid>
+
+                    <!-- Horizontal Scrollable Status Chips -->
+                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                        <HorizontalStackLayout Spacing="6">
+                            <!-- All -->
+                            <Button Text="{Binding TotalTicketsCount, StringFormat='All ({0})'}"
+                                    Command="{Binding SetStatusFilterCommand}"
+                                    CommandParameter="All"
+                                    HeightRequest="30"
+                                    Padding="12,0"
+                                    CornerRadius="15"
+                                    FontSize="11"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="#1E2638"
+                                    TextColor="#F8FAFC" />
+
+                            <!-- Open -->
+                            <Button Text="{Binding OpenStatusCount, StringFormat='Open ({0})'}"
+                                    Command="{Binding SetStatusFilterCommand}"
+                                    CommandParameter="Open"
+                                    HeightRequest="30"
+                                    Padding="12,0"
+                                    CornerRadius="15"
+                                    FontSize="11"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="#142B38"
+                                    TextColor="#34D399" />
+
+                            <!-- InProgress -->
+                            <Button Text="{Binding InProgressStatusCount, StringFormat='In Progress ({0})'}"
+                                    Command="{Binding SetStatusFilterCommand}"
+                                    CommandParameter="InProgress"
+                                    HeightRequest="30"
+                                    Padding="12,0"
+                                    CornerRadius="15"
+                                    FontSize="11"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="#142B38"
+                                    TextColor="#22D3EE" />
+
+                            <!-- Resolved -->
+                            <Button Text="{Binding ResolvedStatusCount, StringFormat='Resolved ({0})'}"
+                                    Command="{Binding SetStatusFilterCommand}"
+                                    CommandParameter="Resolved"
+                                    HeightRequest="30"
+                                    Padding="12,0"
+                                    CornerRadius="15"
+                                    FontSize="11"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="#292014"
+                                    TextColor="#FBBF24" />
+
+                            <!-- Closed -->
+                            <Button Text="{Binding ClosedStatusCount, StringFormat='Closed ({0})'}"
+                                    Command="{Binding SetStatusFilterCommand}"
+                                    CommandParameter="Closed"
+                                    HeightRequest="30"
+                                    Padding="12,0"
+                                    CornerRadius="15"
+                                    FontSize="11"
+                                    FontAttributes="Bold"
+                                    BackgroundColor="#1E2638"
+                                    TextColor="#94A3B8" />
+                        </HorizontalStackLayout>
+                    </ScrollView>
+                </VerticalStackLayout>
+
+                <!-- Tickets CollectionView -->
+                <CollectionView ItemsSource="{Binding FilteredTickets}">
+                    <CollectionView.EmptyView>
+                        <Border BackgroundColor="#121725"
+                                Stroke="#1E2638"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="24"
+                                Margin="0,8">
+                            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Label Text="📭" FontSize="32" HorizontalTextAlignment="Center" />
+                                <Label Text="No support tickets found"
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="#F8FAFC"
+                                       HorizontalTextAlignment="Center" />
+                                <Label Text="Tap 'New Ticket' to get assistance."
+                                       FontSize="12"
+                                       TextColor="#64748B"
+                                       HorizontalTextAlignment="Center" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </CollectionView.EmptyView>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dtos:SupportTicketSummaryDto">
+                            <Border BackgroundColor="#121725"
+                                    Stroke="#1E2638"
+                                    StrokeShape="RoundRectangle 12"
+                                    Padding="14"
+                                    Margin="0,0,0,10">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LoginViewModel}}, Path=OpenTicketDetailCommand}"
+                                                          CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+
+                                <VerticalStackLayout Spacing="6">
+                                    <!-- Header: ID + Status + Category -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                                            <Label Text="{Binding Id, StringFormat='#{0}'}"
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#64748B" />
+
+                                            <Border BackgroundColor="#142B38"
+                                                    Stroke="#06B6D4"
+                                                    StrokeShape="RoundRectangle 4"
+                                                    Padding="6,1">
+                                                <Label Text="{Binding Status}"
+                                                       FontSize="10"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#38BDF8" />
+                                            </Border>
+
+                                            <Label Text="{Binding Category}"
+                                                   FontSize="11"
+                                                   TextColor="#94A3B8"
+                                                   VerticalOptions="Center" />
+                                        </HorizontalStackLayout>
+
+                                        <!-- New Staff Reply Star Badge -->
+                                        <Border Grid.Column="1"
+                                                IsVisible="{Binding HasUnreadStaffReply}"
+                                                BackgroundColor="#06B6D4"
+                                                StrokeThickness="0"
+                                                StrokeShape="RoundRectangle 4"
+                                                Padding="6,2">
+                                            <Label Text="★ NEW REPLY"
+                                                   FontSize="9"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#06080D" />
+                                        </Border>
+                                    </Grid>
+
+                                    <!-- Subject -->
+                                    <Label Text="{Binding Subject}"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="#F8FAFC" />
+
+                                    <!-- Short Answer Preview Quote Box -->
+                                    <Border IsVisible="{Binding LastReplyPreview, Converter={StaticResource IsNotNullOrEmptyConverter}}"
+                                            BackgroundColor="#0B0F19"
+                                            Stroke="#1E2638"
+                                            StrokeShape="RoundRectangle 8"
+                                            Padding="10,6">
+                                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                                            <Label Text="💬" FontSize="12" VerticalOptions="Start" />
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                                <Label Text="{Binding LastReplyBy, StringFormat='{0}:'}"
+                                                       FontSize="10"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#38BDF8" />
+                                                <Label Text="{Binding LastReplyPreview}"
+                                                       FontSize="11"
+                                                       TextColor="#CBD5E1"
+                                                       LineBreakMode="TailTruncation"
+                                                       MaxLines="2" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </Border>
+
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <Label Text="{Binding MessageCount, StringFormat='{0} messages'}"
+                                               FontSize="11"
+                                               TextColor="#64748B" />
+                                        <Label Grid.Column="1"
+                                               Text="View Chat →"
+                                               FontSize="11"
+                                               FontAttributes="Bold"
+                                               TextColor="#06B6D4" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Logout Button UNDER profile & tickets -->
+                <Button Text="Logout"
+                        Command="{Binding LogoutCommand}"
+                        BackgroundColor="#7F1D1D"
+                        TextColor="#FECACA"
+                        FontAttributes="Bold"
+                        CornerRadius="8"
+                        HeightRequest="46"
+                        Margin="0,12,0,24" />
+
+            </VerticalStackLayout>
+
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <!-- SIGNED OUT VIEW: Sign In Form with Eagle Logo on top         -->
+            <!-- ═══════════════════════════════════════════════════════════ -->
+            <Border IsVisible="{Binding IsNotAuthenticated}"
+                    BackgroundColor="#121725"
+                    Stroke="#1E2638"
+                    StrokeShape="RoundRectangle 16"
+                    Padding="24"
+                    VerticalOptions="Center">
+                <VerticalStackLayout Spacing="16">
+                    <!-- Eagle Logo on top -->
+                    <Image Source="bartigran_logo.png"
+                           HeightRequest="56"
+                           WidthRequest="56"
+                           Aspect="AspectFit"
+                           HorizontalOptions="Center" />
+
+                    <Label Text="BARTIGRAN MOVIE"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="#06B6D4"
+                           HorizontalTextAlignment="Center"
+                           CharacterSpacing="1" />
+
+                    <Label Text="Sign in to unlock your subscriptions &amp; support"
+                           FontSize="13"
+                           TextColor="#94A3B8"
+                           HorizontalTextAlignment="Center" />
+
+                    <Entry Text="{Binding Email}"
+                           Placeholder="Email Address"
+                           TextColor="#F8FAFC"
+                           BackgroundColor="#141A29" />
+
+                    <Border BackgroundColor="#141A29"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Entry Text="{Binding Password}"
+                                   x:Name="PasswordEntry"
+                                   Placeholder="Password"
+                                   IsPassword="True"
+                                   TextColor="#F8FAFC"
+                                   BackgroundColor="Transparent"
+                                   Margin="12,0,0,0" />
+                            <Button x:Name="TogglePasswordButton"
+                                    Grid.Column="1"
+                                    Text="&#x1F441;"
+                                    Clicked="OnTogglePasswordClicked"
+                                    BackgroundColor="Transparent"
+                                    TextColor="#64748B"
+                                    FontSize="16"
+                                    Padding="12,0"
+                                    HeightRequest="44"
+                                    WidthRequest="52" />
+                        </Grid>
+                    </Border>
+
+                    <Label Text="{Binding ErrorMessage}"
+                           TextColor="#F43F5E"
+                           FontSize="12"
+                           IsVisible="{Binding HasError}" />
+
+                    <Button Text="Sign In"
+                            Command="{Binding LoginCommand}"
+                            BackgroundColor="#06B6D4"
+                            TextColor="#06080D"
+                            FontAttributes="Bold"
+                            CornerRadius="8"
+                            HeightRequest="44" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+    </ScrollView>
+</ContentPage>

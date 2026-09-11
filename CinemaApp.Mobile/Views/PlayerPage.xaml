@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:vm="clr-namespace:CinemaApp.Mobile.ViewModels"
+             x:Class="CinemaApp.Mobile.Views.PlayerPage"
+             x:DataType="vm:PlayerViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="#000000">
+
+    <Grid RowDefinitions="*,Auto">
+        <!-- VIDEO PLAYER OR RESTRICTION OVERLAY -->
+        <Grid Grid.Row="0">
+            <!-- MediaElement Video Player -->
+            <toolkit:MediaElement x:Name="mediaPlayer"
+                                  Source="{Binding StreamUrl}"
+                                  ShouldAutoPlay="True"
+                                  ShouldShowPlaybackControls="True"
+                                  IsVisible="{Binding IsNotRestricted}"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Fill" />
+
+            <!-- PRO SUBSCRIPTION RESTRICTION LOCK OVERLAY -->
+            <Border BackgroundColor="rgba(6, 8, 13, 0.95)"
+                    Stroke="#F59E0B"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 16"
+                    Margin="24"
+                    Padding="24"
+                    IsVisible="{Binding IsRestricted}"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center">
+                <VerticalStackLayout Spacing="16" MaximumWidthRequest="360" HorizontalOptions="Center">
+                    <Label Text="🔒" FontSize="44" HorizontalTextAlignment="Center" />
+                    <Label Text="Cinema Pro Required"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="#FFFFFF"
+                           HorizontalTextAlignment="Center" />
+                    <Label Text="{Binding RestrictionMessage}"
+                           FontSize="13"
+                           TextColor="#94A3B8"
+                           HorizontalTextAlignment="Center" />
+
+                    <Button Text="Switch to 480p Free"
+                            Command="{Binding ChangeQualityCommand}"
+                            CommandParameter="480p"
+                            BackgroundColor="#1E2638"
+                            TextColor="#F8FAFC"
+                            CornerRadius="8" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- BOTTOM CONTROLS & QUALITY SELECTOR -->
+        <Border Grid.Row="1"
+                BackgroundColor="#0A0E17"
+                Stroke="#1E2638"
+                StrokeThickness="1"
+                Padding="16">
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Quality Settings" FontSize="12" TextColor="#94A3B8" FontAttributes="Bold" />
+                <HorizontalStackLayout Spacing="8">
+                    <Button Text="360p"
+                            Command="{Binding ChangeQualityCommand}" CommandParameter="360p"
+                            BackgroundColor="#141A29" TextColor="#F8FAFC" FontSize="12" CornerRadius="6" Padding="12,6" />
+                    <Button Text="480p"
+                            Command="{Binding ChangeQualityCommand}" CommandParameter="480p"
+                            BackgroundColor="#141A29" TextColor="#F8FAFC" FontSize="12" CornerRadius="6" Padding="12,6" />
+                    <Button Text="720p HD"
+                            Command="{Binding ChangeQualityCommand}" CommandParameter="720p"
+                            BackgroundColor="#141A29" TextColor="#F59E0B" FontSize="12" CornerRadius="6" Padding="12,6" />
+                    <Button Text="1080p FHD"
+                            Command="{Binding ChangeQualityCommand}" CommandParameter="1080p"
+                            BackgroundColor="#141A29" TextColor="#F59E0B" FontSize="12" CornerRadius="6" Padding="12,6" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>

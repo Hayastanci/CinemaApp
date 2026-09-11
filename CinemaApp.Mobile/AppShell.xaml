@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="CinemaApp.Mobile.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:CinemaApp.Mobile.Views"
+    Title="Bartigran Movie App">
+
+    <TabBar Shell.TabBarBackgroundColor="#0A0E17"
+            Shell.TabBarForegroundColor="#06B6D4"
+            Shell.TabBarTitleColor="#94A3B8"
+            Shell.TabBarUnselectedColor="#64748B">
+
+        <Tab Title="Movies" Icon="tab_movies.png">
+            <ShellContent
+                Title="Movies"
+                ContentTemplate="{DataTemplate views:CatalogPage}"
+                Route="catalog" />
+        </Tab>
+
+        <Tab Title="Sign In" Icon="tab_account.png" x:Name="AccountTab">
+            <ShellContent
+                Title="Sign In"
+                ContentTemplate="{DataTemplate views:LoginPage}"
+                Route="loginTab"
+                x:Name="AccountShellContent" />
+        </Tab>
+    </TabBar>
+
+</Shell>

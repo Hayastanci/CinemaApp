@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="CinemaApp.Core/CinemaApp.Core.csproj" />
+  <Project Path="CinemaApp.Mobile/CinemaApp.Mobile.csproj" />
+  <Project Path="CinemaApp.Web/CinemaApp.Web.csproj" />
+</Solution>

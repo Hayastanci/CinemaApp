@@ -1,0 +1,48 @@
+@{
+    ViewData["Title"] = "Account Login";
+    var ui = Context.Request.Cookies["cinema_lang"] ?? "en-US";
+}
+
+<div class="content-wrapper" style="padding-top: 4rem; max-width: 440px;">
+    <div class="admin-card" style="box-shadow: var(--shadow-subtle);">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎬</div>
+            <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;">@UiStrings.Tr(ui, "Sign In")</h1>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">@UiStrings.Tr(ui, "Access your CinemaApp streaming profile")</p>
+        </div>
+
+        @if (ViewBag.Error != null)
+        {
+            <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid var(--accent-rose); color: #fda4af; padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.85rem;">
+                @ViewBag.Error
+            </div>
+        }
+
+        <form asp-action="Login" method="post">
+            <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+            <div class="form-group">
+                <label class="form-label">@UiStrings.Tr(ui, "Email Address")</label>
+                <input type="email" name="email" class="form-control" placeholder="admin@cinema.local or user@cinema.local" required />
+            </div>
+
+            <div class="form-group" style="margin-bottom: 2rem;">
+                <label class="form-label">@UiStrings.Tr(ui, "Password")</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
+                @UiStrings.Tr(ui, "Sign In to Cinema")
+            </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
+            @UiStrings.Tr(ui, "Don't have an account?") <a asp-action="Register" style="color: var(--accent-cyan); font-weight: 600;">@UiStrings.Tr(ui, "Create one now")</a>
+        </div>
+
+        <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-surface); border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--text-dim);">
+            <strong>@UiStrings.Tr(ui, "Demo Credentials:")</strong><br />
+            Admin: <code>admin@cinema.local</code> / <code>AdminPass123!</code><br />
+            Subscriber: <code>subscriber@cinema.local</code> / <code>UserPass123!</code>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,91 @@
+@model List<CinemaApp.Core.Entities.Language>
+@{
+    ViewData["Title"] = "Dynamic Language Management";
+}
+
+<div class="content-wrapper" style="padding-top: 2rem; max-width: 900px;">
+    <div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+        <a asp-action="Index" class="btn btn-secondary btn-sm">
+            <span>←</span> Back to Dashboard
+        </a>
+        <span style="color: var(--accent-green); font-weight: 600; font-size: 0.9rem;">
+            Dynamic Multilingual Engine
+        </span>
+    </div>
+
+    <div class="admin-card">
+        <h1 style="font-size: 2rem; margin-bottom: 0.5rem;">Manage Languages</h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem;">
+            Active languages are dynamically available throughout the catalog, in the client language switcher, and in the AI auto-translation pipeline.
+        </p>
+
+        <!-- ADD LANGUAGE FORM -->
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 2rem;">
+            <h3 style="font-size: 1.15rem; margin-bottom: 1rem; color: var(--accent-cyan);">Register New Language</h3>
+            <form asp-action="AddLanguage" method="post" style="display: grid; grid-template-columns: 1fr 1fr 120px 140px; gap: 1rem; align-items: end;">
+                <div>
+                    <label class="form-label">Culture Code (RFC 4646)</label>
+                    <input type="text" name="cultureCode" class="form-control" placeholder="e.g. es-ES, fr-FR, de-DE" required />
+                </div>
+                <div>
+                    <label class="form-label">Display Name</label>
+                    <input type="text" name="displayName" class="form-control" placeholder="e.g. Español, Français, Deutsch" required />
+                </div>
+                <div>
+                    <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; height: 38px;">
+                        <input type="checkbox" name="isActive" value="true" checked />
+                        <span>Active</span>
+                    </label>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <span>➕</span> Add
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- LANGUAGES TABLE -->
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                    <th style="padding: 0.75rem 1rem;">ID</th>
+                    <th style="padding: 0.75rem 1rem;">Culture Code</th>
+                    <th style="padding: 0.75rem 1rem;">Display Name</th>
+                    <th style="padding: 0.75rem 1rem;">Status</th>
+                    <th style="padding: 0.75rem 1rem;">Default</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var lang in Model)
+                {
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04);">
+                        <td style="padding: 1rem; color: var(--text-dim); font-weight: 700;">#@lang.Id</td>
+                        <td style="padding: 1rem; font-weight: 700; color: var(--accent-cyan); font-family: monospace;">@lang.CultureCode</td>
+                        <td style="padding: 1rem; font-weight: 600;">@lang.DisplayName</td>
+                        <td style="padding: 1rem;">
+                            @if (lang.IsActive)
+                            {
+                                <span style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-green); color: #6ee7b7; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">ACTIVE</span>
+                            }
+                            else
+                            {
+                                <span style="background: rgba(244, 63, 94, 0.15); border: 1px solid var(--accent-rose); color: #fda4af; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">INACTIVE</span>
+                            }
+                        </td>
+                        <td style="padding: 1rem;">
+                            @if (lang.IsDefault)
+                            {
+                                <span style="background: rgba(245, 158, 11, 0.2); border: 1px solid var(--accent-gold); color: var(--accent-gold); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;">PRIMARY</span>
+                            }
+                            else
+                            {
+                                <span style="color: var(--text-dim);">-</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

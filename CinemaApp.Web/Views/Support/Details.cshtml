@@ -1,0 +1,167 @@
+@model CinemaApp.Core.Entities.SupportTicket
+@{
+    ViewData["Title"] = $"Ticket #{Model.Id} - {Model.Subject}";
+    var isAdmin = (bool)(ViewBag.IsAdmin ?? false);
+    var currentUser = (CinemaApp.Core.Entities.User)ViewBag.CurrentUser;
+}
+
+<div style="max-width: 960px; margin: 2rem auto; padding: 0 1.5rem;">
+    <!-- Navigation Back -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem;">
+        <a asp-action="Index" style="color: #06B6D4; text-decoration: none; font-size: 0.9rem; font-weight: 600;">
+            ← Back to All Tickets
+        </a>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <span style="background: rgba(16,185,129,0.2); color: #34D399; font-size: 0.85rem; font-weight: 600; padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3);">
+                ✓ @TempData["SuccessMessage"]
+            </span>
+        }
+    </div>
+
+    <!-- Ticket Summary Card -->
+    <div style="background: linear-gradient(135deg, rgba(18, 24, 38, 0.95), rgba(10, 14, 23, 0.98)); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; padding: 1.75rem 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.4); margin-bottom: 2rem;">
+        
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                    <span style="font-size: 0.9rem; font-weight: 800; color: #64748B;">#@Model.Id</span>
+
+                    <!-- Status Badge -->
+                    <span style="font-size: 0.75rem; font-weight: 800; padding: 3px 10px; border-radius: 6px; letter-spacing: 0.04em; text-transform: uppercase; @(Model.Status switch {
+                        "Open" => "background: rgba(16,185,129,0.15); color: #34D399; border: 1px solid rgba(16,185,129,0.3);",
+                        "InProgress" => "background: rgba(6,182,212,0.15); color: #22D3EE; border: 1px solid rgba(6,182,212,0.3);",
+                        "Resolved" => "background: rgba(245,158,11,0.15); color: #FBBF24; border: 1px solid rgba(245,158,11,0.3);",
+                        _ => "background: rgba(148,163,184,0.15); color: #94A3B8; border: 1px solid rgba(148,163,184,0.3);"
+                    })">
+                        @Model.Status
+                    </span>
+
+                    <span style="font-size: 0.75rem; color: #94A3B8; background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 6px;">
+                        🏷️ @Model.Category
+                    </span>
+
+                    <span style="font-size: 0.75rem; color: #94A3B8; background: rgba(255,255,255,0.06); padding: 3px 8px; border-radius: 6px;">
+                        Priority: @Model.Priority
+                    </span>
+                </div>
+
+                <h1 style="margin: 0; font-size: 1.6rem; font-weight: 800; color: #F8FAFC; line-height: 1.3;">
+                    @Model.Subject
+                </h1>
+
+                <div style="margin-top: 10px; font-size: 0.85rem; color: #94A3B8; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                    <span>Created by: <strong style="color: #E2E8F0;">@Model.UserEmail</strong></span>
+                    <span>Opened: @Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                    <span>Last active: @Model.UpdatedAt.ToString("MMM dd, HH:mm")</span>
+                </div>
+            </div>
+
+            <!-- Status Changing Controls -->
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                @if (isAdmin)
+                {
+                    <form action="/support/ticket/@Model.Id/status" method="post" style="display: flex; gap: 8px; align-items: center;">
+                        @Html.AntiForgeryToken()
+                        <select name="status" style="background: #0E121E; color: #F8FAFC; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 7px 12px; font-size: 0.85rem; outline: none;">
+                            <option value="Open" selected="@(Model.Status == "Open")">Open</option>
+                            <option value="InProgress" selected="@(Model.Status == "InProgress")">In Progress</option>
+                            <option value="Resolved" selected="@(Model.Status == "Resolved")">Resolved</option>
+                            <option value="Closed" selected="@(Model.Status == "Closed")">Closed</option>
+                        </select>
+                        <button type="submit" style="background: rgba(255,255,255,0.1); color: #FFF; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 7px 14px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                            Update Status
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    @if (Model.Status != "Closed")
+                    {
+                        <form action="/support/ticket/@Model.Id/status" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="status" value="Closed" />
+                            <button type="submit" style="background: rgba(244,63,94,0.15); color: #FDA4AF; border: 1px solid rgba(244,63,94,0.3); border-radius: 8px; padding: 7px 14px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                Close Ticket
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form action="/support/ticket/@Model.Id/status" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="status" value="Open" />
+                            <button type="submit" style="background: rgba(16,185,129,0.15); color: #34D399; border: 1px solid rgba(16,185,129,0.3); border-radius: 8px; padding: 7px 14px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                Reopen Ticket
+                            </button>
+                        </form>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Conversation Stream -->
+    <div style="margin-bottom: 2rem;">
+        <h3 style="color: #94A3B8; font-size: 0.85rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 1rem;">
+            Conversation History (@(Model.Messages?.Count ?? 0) messages)
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            @if (Model.Messages != null)
+            {
+                foreach (var msg in Model.Messages.OrderBy(m => m.CreatedAt))
+                {
+                    var isStaff = msg.SenderRole == CinemaApp.Core.Entities.UserRole.Admin;
+
+                    <div style="display: flex; flex-direction: column; @(isStaff ? "align-items: flex-start;" : "align-items: flex-end;")">
+                        
+                        <!-- Header info above message bubble -->
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 0.8rem; color: #94A3B8;">
+                            @if (isStaff)
+                            {
+                                <span style="font-weight: 700; color: #38BDF8; display: flex; align-items: center; gap: 4px;">
+                                    <span>🛡️</span> Bartigran Support
+                                </span>
+                            }
+                            else
+                            {
+                                <span style="font-weight: 700; color: #CBD5E1;">
+                                    @(string.IsNullOrEmpty(msg.SenderName) ? msg.SenderEmail.Split('@')[0] : msg.SenderName)
+                                </span>
+                            }
+                            <span>• @msg.CreatedAt.ToString("MMM dd, HH:mm")</span>
+                        </div>
+
+                        <!-- Message Bubble -->
+                        <div style="max-width: 85%; border-radius: 16px; padding: 1rem 1.25rem; line-height: 1.5; font-size: 0.95rem; @(isStaff 
+                            ? "background: linear-gradient(135deg, rgba(14, 30, 48, 0.95), rgba(10, 20, 35, 0.95)); border: 1px solid rgba(6, 182, 212, 0.35); color: #F0FDF4; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" 
+                            : "background: rgba(22, 29, 46, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); color: #F8FAFC;")">
+                            <p style="margin: 0; white-space: pre-wrap;">@msg.Message</p>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Reply Box -->
+    <div style="background: linear-gradient(135deg, rgba(18, 24, 38, 0.95), rgba(10, 14, 23, 0.98)); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; padding: 1.5rem 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.4);">
+        <h4 style="margin: 0 0 12px; font-size: 1.1rem; color: #F8FAFC; display: flex; align-items: center; gap: 8px;">
+            <span>💬</span> @(isAdmin ? "Reply as Staff Support" : "Send Reply to Support")
+        </h4>
+
+        <form action="/support/ticket/@Model.Id/reply" method="post">
+            @Html.AntiForgeryToken()
+
+            <textarea name="message" required rows="4" placeholder="@(isAdmin ? "Type your official response to the user..." : "Write your reply or additional details here...")" style="width: 100%; background: rgba(14, 18, 30, 0.95); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px; padding: 12px 14px; color: #F8FAFC; font-size: 0.95rem; outline: none; box-sizing: border-box; resize: vertical; transition: border-color 0.2s;" onfocus="this.style.borderColor='#06B6D4'" onblur="this.style.borderColor='rgba(255, 255, 255, 0.14)'"></textarea>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
+                <button type="submit" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #06B6D4, #0284C7); color: #06080D; font-weight: 700; padding: 10px 22px; border-radius: 10px; border: none; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);">
+                    <span>📤</span> Send Reply
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

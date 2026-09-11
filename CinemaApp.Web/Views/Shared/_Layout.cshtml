@@ -1,0 +1,404 @@
+@using System.Security.Claims
+@{
+    var ui = Context.Request.Cookies["cinema_lang"] ?? "en-US";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Bartigran Movie App</title>
+    <meta name="description" content="Bartigran Movie App — Next-Generation 4K &amp; Full HD Online Cinema and Multilingual Streaming Platform." />
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- Bartigran Movie App Favicon & Icons                 -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!-- SVG favicon: best quality, scales perfectly in all modern browsers -->
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+    <!-- PNG fallback: for older browsers that don't support SVG favicons -->
+    <link rel="icon" type="image/png" href="~/favicon.png" sizes="512x512" />
+    <!-- Classic .ico fallback: for legacy browsers (IE, old Edge) -->
+    <link rel="shortcut icon" href="~/favicon.ico" />
+    <!-- Apple Touch Icon: shown when added to iPhone/iPad home screen -->
+    <link rel="apple-touch-icon" href="~/favicon.png" />
+    <!-- Browser theme color: colors the browser chrome on Android Chrome -->
+    <meta name="theme-color" content="#060A12" />
+    <!-- Open Graph image: shown when link is shared on social media -->
+    <meta property="og:image" content="~/images/bartigran-icon.png" />
+    <meta property="og:title" content="Bartigran Movie App" />
+    <meta property="og:description" content="Watch movies in 4K HD with AI multilingual translations." />
+
+    <link rel="stylesheet" href="~/css/cinema.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="cinema-navbar">
+        <a asp-controller="Home" asp-action="Index" class="brand-logo" style="display:flex;flex-direction:column;align-items:center;text-decoration:none;gap:2px;padding:4px 0;">
+            <img src="~/images/bartigran-icon.png" alt="Bartigran" style="height:42px;width:42px;border-radius:10px;object-fit:cover;box-shadow:0 0 16px rgba(6,182,212,0.35);" />
+            <span style="font-size:0.75rem;letter-spacing:0.12em;font-weight:800;line-height:1;margin-top:2px;">BARTIGRAN<span style="color: var(--accent-cyan);"> MOVIE</span></span>
+        </a>
+
+        <ul class="nav-links">
+            <li>
+                <a asp-controller="Home" asp-action="Index" class="nav-link">
+                    <span>🍿</span> @UiStrings.Tr(ui, "Movies")
+                </a>
+            </li>
+            <li>
+                <a asp-controller="Account" asp-action="Subscription" class="nav-link" style="color: var(--accent-gold);">
+                    <span>⭐</span> @UiStrings.Tr(ui, "VIP Pass")
+                </a>
+            </li>
+            @if (User.IsInRole("Admin"))
+            {
+                <li>
+                    <a asp-controller="Admin" asp-action="Index" class="nav-link">
+                        <span>⚡</span> @UiStrings.Tr(ui, "Admin Dashboard")
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Admin" asp-action="CreateMovie" class="nav-link">
+                        <span>🤖</span> @UiStrings.Tr(ui, "AI Movie Editor")
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Languages" class="nav-link">
+                        <span>🌐</span> @UiStrings.Tr(ui, "Languages")
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Admin" asp-action="Categories" class="nav-link">
+                        <span>🏷️</span> @UiStrings.Tr(ui, "Categories")
+                    </a>
+                </li>
+            }
+        </ul>
+
+        <div class="nav-actions" style="display: flex; align-items: center; gap: 1rem;">
+            <!-- Custom Language Dropdown with Real Vector Flags -->
+            <div class="custom-lang-dropdown" id="customLangDropdown" style="position: relative;">
+                <button type="button" class="custom-lang-btn" onclick="toggleLangDropdown(event)" style="display: flex; align-items: center; gap: 8px; background: rgba(20, 26, 41, 0.9); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; padding: 6px 14px 6px 10px; color: #F8FAFC; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.25);">
+                    @if (ui.StartsWith("hy", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <svg width="20" height="14" viewBox="0 0 600 300" style="border-radius: 3px; box-shadow: 0 0 4px rgba(0,0,0,0.5); flex-shrink: 0;"><rect width="600" height="100" fill="#D90012"/><rect y="100" width="600" height="100" fill="#0033A0"/><rect y="200" width="600" height="100" fill="#F2A800"/></svg>
+                        <span>Հայերեն</span>
+                    }
+                    else if (ui.StartsWith("ru", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <svg width="20" height="14" viewBox="0 0 600 300" style="border-radius: 3px; box-shadow: 0 0 4px rgba(0,0,0,0.5); flex-shrink: 0;"><rect width="600" height="100" fill="#FFFFFF"/><rect y="100" width="600" height="100" fill="#0039A6"/><rect y="200" width="600" height="100" fill="#D52B1E"/></svg>
+                        <span>Русский</span>
+                    }
+                    else
+                    {
+                        <svg width="20" height="14" viewBox="0 0 741 390" style="border-radius: 3px; box-shadow: 0 0 4px rgba(0,0,0,0.5); flex-shrink: 0;"><rect width="741" height="390" fill="#B22234"/><rect y="30" width="741" height="30" fill="#FFF"/><rect y="90" width="741" height="30" fill="#FFF"/><rect y="150" width="741" height="30" fill="#FFF"/><rect y="210" width="741" height="30" fill="#FFF"/><rect y="270" width="741" height="30" fill="#FFF"/><rect y="330" width="741" height="30" fill="#FFF"/><rect width="296.4" height="210" fill="#3C3B6E"/></svg>
+                        <span>English</span>
+                    }
+                    <span style="font-size: 0.65rem; color: #94A3B8; margin-left: 2px;">▼</span>
+                </button>
+
+                <div class="custom-lang-menu" id="customLangMenu" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; min-width: 155px; background: rgba(14, 18, 30, 0.98); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 6px; box-shadow: 0 12px 30px rgba(0,0,0,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 1000;">
+                    <div onclick="selectLang('en-US')" class="lang-option" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #F8FAFC; font-size: 0.85rem; font-weight: 500;" onmouseover="this.style.background='rgba(6,182,212,0.15)'" onmouseout="this.style.background='transparent'">
+                        <svg width="20" height="14" viewBox="0 0 741 390" style="border-radius: 3px; box-shadow: 0 0 3px rgba(0,0,0,0.4); flex-shrink: 0;"><rect width="741" height="390" fill="#B22234"/><rect y="30" width="741" height="30" fill="#FFF"/><rect y="90" width="741" height="30" fill="#FFF"/><rect y="150" width="741" height="30" fill="#FFF"/><rect y="210" width="741" height="30" fill="#FFF"/><rect y="270" width="741" height="30" fill="#FFF"/><rect y="330" width="741" height="30" fill="#FFF"/><rect width="296.4" height="210" fill="#3C3B6E"/></svg>
+                        <span>English</span>
+                        @if (!ui.StartsWith("hy", StringComparison.OrdinalIgnoreCase) && !ui.StartsWith("ru", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span style="margin-left: auto; color: var(--accent-cyan); font-weight: 700;">✓</span>
+                        }
+                    </div>
+                    <div onclick="selectLang('hy-AM')" class="lang-option" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #F8FAFC; font-size: 0.85rem; font-weight: 500;" onmouseover="this.style.background='rgba(6,182,212,0.15)'" onmouseout="this.style.background='transparent'">
+                        <svg width="20" height="14" viewBox="0 0 600 300" style="border-radius: 3px; box-shadow: 0 0 3px rgba(0,0,0,0.4); flex-shrink: 0;"><rect width="600" height="100" fill="#D90012"/><rect y="100" width="600" height="100" fill="#0033A0"/><rect y="200" width="600" height="100" fill="#F2A800"/></svg>
+                        <span>Հայերեն</span>
+                        @if (ui.StartsWith("hy", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span style="margin-left: auto; color: var(--accent-cyan); font-weight: 700;">✓</span>
+                        }
+                    </div>
+                    <div onclick="selectLang('ru-RU')" class="lang-option" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: #F8FAFC; font-size: 0.85rem; font-weight: 500;" onmouseover="this.style.background='rgba(6,182,212,0.15)'" onmouseout="this.style.background='transparent'">
+                        <svg width="20" height="14" viewBox="0 0 600 300" style="border-radius: 3px; box-shadow: 0 0 3px rgba(0,0,0,0.4); flex-shrink: 0;"><rect width="600" height="100" fill="#FFFFFF"/><rect y="100" width="600" height="100" fill="#0039A6"/><rect y="200" width="600" height="100" fill="#D52B1E"/></svg>
+                        <span>Русский</span>
+                        @if (ui.StartsWith("ru", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span style="margin-left: auto; color: var(--accent-cyan); font-weight: 700;">✓</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Authentication State -->
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                var isSub = User.Claims.FirstOrDefault(c => c.Type == "is_subscribed")?.Value == "true";
+                var userRole = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
+                var isAdmin = userRole == "Admin";
+                var userName = User.Identity.Name ?? "User";
+
+                <!-- Notification Bell -->
+                <div style="position: relative;">
+                    <button type="button" id="notifBellBtn" onclick="toggleNotifMenu(event)" title="Notifications" style="display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: rgba(18, 23, 37, 0.92); border: 1px solid rgba(255, 255, 255, 0.14); color: #F8FAFC; font-size: 1.1rem; cursor: pointer; position: relative; transition: all 0.2s;" onmouseover="this.style.borderColor='#06B6D4'; this.style.boxShadow='0 0 12px rgba(6,182,212,0.3)';" onmouseout="this.style.borderColor='rgba(255, 255, 255, 0.14)'; this.style.boxShadow='none';">
+                        <span id="notifBellIcon" style="display: inline-block;">🔔</span>
+                        <span id="notifBadge" style="display: none; position: absolute; top: -3px; right: -3px; background: linear-gradient(135deg, #EF4444, #DC2626); color: #FFF; font-size: 0.65rem; font-weight: 800; min-width: 17px; height: 17px; border-radius: 999px; padding: 0 4px; box-sizing: border-box; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);">0</span>
+                    </button>
+
+                    <!-- Notifications Dropdown Menu -->
+                    <div id="notifDropdownMenu" style="display: none; position: absolute; top: calc(100% + 10px); right: 0; width: 330px; background: rgba(14, 18, 30, 0.98); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 16px; padding: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.7); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); z-index: 1100;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 8px;">
+                            <span style="font-weight: 700; font-size: 0.9rem; color: #F8FAFC;">Notifications</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span id="notifCountLabel" style="font-size: 0.75rem; color: #94A3B8;">0 unread</span>
+                                <button type="button" onclick="markAllNotifsRead(event)" style="background: none; border: none; color: #06B6D4; font-size: 0.72rem; font-weight: 600; cursor: pointer; padding: 2px 4px; border-radius: 4px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Mark all read</button>
+                            </div>
+                        </div>
+                        <div id="notifList" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="padding: 12px; text-align: center; color: #64748B; font-size: 0.85rem;">No new notifications</div>
+                        </div>
+                        <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
+                            <a asp-controller="Support" asp-action="Index" style="font-size: 0.8rem; color: #06B6D4; font-weight: 600; text-decoration: none;">View All Support Tickets →</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Helpdesk Link (if Admin) -->
+                @if (isAdmin)
+                {
+                    <a asp-controller="Support" asp-action="Index" asp-route-view="admin" class="admin-helpdesk-pill" style="display: flex; align-items: center; gap: 6px; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); padding: 6px 12px; border-radius: 999px; text-decoration: none; color: #FCA5A5; font-size: 0.8rem; font-weight: 700; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.25)';" onmouseout="this.style.background='rgba(239, 68, 68, 0.15)';">
+                        <span>🛠️</span> Helpdesk
+                        <span id="adminUnansweredBadge" style="display: none; background: #EF4444; color: #FFF; font-size: 0.7rem; padding: 1px 6px; border-radius: 999px; font-weight: 800;"></span>
+                    </a>
+                }
+
+                <div class="user-profile-pill" style="display: flex; align-items: center; gap: 0.65rem; background: rgba(18, 23, 37, 0.92); border: 1px solid rgba(255, 255, 255, 0.12); padding: 4px 10px 4px 5px; border-radius: 999px; box-shadow: 0 4px 15px rgba(0,0,0,0.35);">
+                    <!-- User Avatar (clickable to Profile) -->
+                    <a asp-controller="Account" asp-action="Profile" title="My Profile & Tickets" style="text-decoration: none; display: flex; align-items: center;">
+                        <div style="width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #06B6D4, #3B82F6); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; color: #FFFFFF; box-shadow: 0 0 10px rgba(6, 182, 212, 0.45); flex-shrink: 0; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            @(string.IsNullOrEmpty(userName) ? "U" : userName.Substring(0, 1).ToUpperInvariant())
+                        </div>
+                    </a>
+
+                    <!-- User Name & Status -->
+                    <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <a asp-controller="Account" asp-action="Profile" style="font-size: 0.85rem; font-weight: 700; color: #F8FAFC; white-space: nowrap; text-decoration: none;" onmouseover="this.style.color='#06B6D4'" onmouseout="this.style.color='#F8FAFC'">@userName</a>
+                            @if (isSub)
+                            {
+                                <span style="background: linear-gradient(135deg, #F59E0B, #D97706); color: #06080D; font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; letter-spacing: 0.04em;">PRO</span>
+                            }
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <a asp-controller="Support" asp-action="Index" style="font-size: 0.7rem; color: #06B6D4; text-decoration: none; font-weight: 600;">🎧 Support</a>
+                            @if (!isSub)
+                            {
+                                <a asp-controller="Account" asp-action="Subscription" style="font-size: 0.7rem; color: var(--accent-gold); text-decoration: none; font-weight: 600;">⭐ Pro</a>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Vertical separator -->
+                    <div style="width: 1px; height: 20px; background: rgba(255, 255, 255, 0.14); margin: 0 2px;"></div>
+
+                    <!-- Logout Button -->
+                    <a asp-controller="Account" asp-action="Logout" title="@UiStrings.Tr(ui, "Logout")" style="display: flex; align-items: center; gap: 4px; font-size: 0.8rem; font-weight: 600; color: #FDA4AF; text-decoration: none; padding: 4px 8px; border-radius: 999px; background: rgba(244, 63, 94, 0.14); border: 1px solid rgba(244, 63, 94, 0.3); transition: all 0.2s ease;" onmouseover="this.style.background='rgba(244,63,94,0.25)'" onmouseout="this.style.background='rgba(244,63,94,0.14)'">
+                        <span>🚪</span>
+                    </a>
+                </div>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" class="btn btn-secondary btn-sm">@UiStrings.Tr(ui, "Login")</a>
+                <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-sm">@UiStrings.Tr(ui, "Register")</a>
+            }
+        </div>
+    </header>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-green); color: #6ee7b7; padding: 1rem 2rem; margin: 1rem 2rem; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 0.5rem;">
+            <span>✓</span> @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <main class="cinema-main">
+        @RenderBody()
+    </main>
+
+    <footer class="cinema-footer">
+        <div style="max-width: 1400px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+            <div>
+                <img src="~/images/bartigran-icon.png" alt="Bartigran" style="height:24px;width:24px;border-radius:6px;object-fit:cover;vertical-align:middle;margin-right:6px;" />
+                <strong>Bartigran Movie App</strong> &copy; 2026. Powered by ASP.NET Core 10, FFmpeg &amp; .NET MAUI.
+            </div>
+            <div style="display: flex; gap: 1.5rem;">
+                <a asp-controller="Account" asp-action="Subscription" style="color: var(--accent-gold);">@UiStrings.Tr(ui, "Pro VIP Plans")</a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a href="/swagger" target="_blank" rel="noopener" style="color: var(--accent-cyan);">@UiStrings.Tr(ui, "Swagger API")</a>
+                }
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function toggleLangDropdown(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('customLangMenu');
+            if (menu) {
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+
+        function toggleNotifMenu(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('notifDropdownMenu');
+            if (menu) {
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            const langMenu = document.getElementById('customLangMenu');
+            if (langMenu && !langMenu.contains(e.target) && e.target.id !== 'customLangBtn') {
+                langMenu.style.display = 'none';
+            }
+            const notifMenu = document.getElementById('notifDropdownMenu');
+            if (notifMenu && !notifMenu.contains(e.target) && e.target.id !== 'notifBellBtn' && !e.target.closest('#notifBellBtn')) {
+                notifMenu.style.display = 'none';
+            }
+        });
+
+        async function fetchNotifications() {
+            try {
+                const res = await fetch('/support/notifications/feed');
+                if (!res.ok) return;
+                const data = await res.json();
+
+                const badge = document.getElementById('notifBadge');
+                const bellIcon = document.getElementById('notifBellIcon');
+                if (badge) {
+                    if (data.unreadCount > 0) {
+                        badge.innerText = data.unreadCount > 9 ? '9+' : data.unreadCount;
+                        badge.style.display = 'flex';
+                        if (bellIcon) bellIcon.classList.add('bell-alert-anim');
+                    } else {
+                        badge.style.display = 'none';
+                        if (bellIcon) bellIcon.classList.remove('bell-alert-anim');
+                    }
+                }
+
+                const adminBadge = document.getElementById('adminUnansweredBadge');
+                if (adminBadge) {
+                    if (data.unansweredCount > 0) {
+                        adminBadge.innerText = data.unansweredCount;
+                        adminBadge.style.display = 'inline-block';
+                    } else {
+                        adminBadge.style.display = 'none';
+                    }
+                }
+
+                const countLabel = document.getElementById('notifCountLabel');
+                if (countLabel) {
+                    countLabel.innerText = `${data.unreadCount} unread`;
+                }
+
+                const list = document.getElementById('notifList');
+                if (list) {
+                    if (data.recent && data.recent.length > 0) {
+                        list.innerHTML = data.recent.map(n => `
+                            <a href="/support/ticket/${n.ticketId}" onclick="markNotificationRead(${n.id})" style="text-decoration: none; padding: 8px 10px; border-radius: 8px; background: ${n.isRead ? 'rgba(255,255,255,0.03)' : 'rgba(6,182,212,0.12)'}; border: 1px solid ${n.isRead ? 'transparent' : 'rgba(6,182,212,0.25)'}; display: flex; flex-direction: column; gap: 2px; transition: all 0.2s;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px;">
+                                    <div style="font-size: 0.82rem; font-weight: 700; color: #F8FAFC;">${n.title}</div>
+                                    ${!n.isRead ? '<span style="width: 7px; height: 7px; border-radius: 50%; background: #06B6D4; flex-shrink: 0; box-shadow: 0 0 6px #06B6D4;"></span>' : ''}
+                                </div>
+                                <div style="font-size: 0.75rem; color: #94A3B8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${n.shortMessage}</div>
+                                <div style="font-size: 0.68rem; color: #64748B; margin-top: 2px;">${n.createdAt}</div>
+                            </a>
+                        `).join('');
+                    } else {
+                        list.innerHTML = '<div style="padding: 12px; text-align: center; color: #64748B; font-size: 0.85rem;">No new notifications</div>';
+                    }
+                }
+            } catch (err) {
+                console.debug('Failed to fetch notifications:', err);
+            }
+        }
+
+        async function markNotificationRead(id) {
+            try {
+                await fetch(`/support/notifications/${id}/read`, { method: 'POST' });
+            } catch (err) {
+                console.debug('Failed to mark read:', err);
+            }
+        }
+
+        async function markAllNotifsRead(e) {
+            if (e) e.stopPropagation();
+            try {
+                const res = await fetch('/support/notifications/read-all', { method: 'POST' });
+                if (res.ok) {
+                    await fetchNotifications();
+                }
+            } catch (err) {
+                console.debug('Failed to mark all read:', err);
+            }
+        }
+
+        function getCinemaLangCookie() {
+            const v = `; ${document.cookie}`;
+            const parts = v.split(`; cinema_lang=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        function changeLanguage(code) {
+            // Persist in both localStorage and cookie
+            localStorage.setItem('cinema_lang', code);
+            document.cookie = `cinema_lang=${code}; path=/; max-age=${60 * 60 * 24 * 365}`;
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', code);
+            window.location.href = url.toString();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const urlLang = params.get('lang');
+
+            if (!urlLang) {
+                // No lang in URL — restore from storage and redirect
+                const stored = localStorage.getItem('cinema_lang') || getCinemaLangCookie();
+                if (stored && stored !== 'en-US') {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('lang', stored);
+                    window.location.replace(url.toString());
+                    return;
+                }
+            } else {
+                // Sync storage with current URL
+                localStorage.setItem('cinema_lang', urlLang);
+                document.cookie = `cinema_lang=${urlLang}; path=/; max-age=${60 * 60 * 24 * 365}`;
+            }
+
+            const currentLang = urlLang || localStorage.getItem('cinema_lang') || 'en-US';
+            const selector = document.getElementById('languageSelector');
+            if (selector) selector.value = currentLang;
+
+            if (document.getElementById('notifBellBtn')) {
+                fetchNotifications();
+                setInterval(fetchNotifications, 10000);
+            }
+        });
+    </script>
+    <style>
+        @@keyframes bellWiggle {
+            0% { transform: rotate(0); }
+            15% { transform: rotate(14deg); }
+            30% { transform: rotate(-14deg); }
+            45% { transform: rotate(9deg); }
+            60% { transform: rotate(-9deg); }
+            75% { transform: rotate(4deg); }
+            100% { transform: rotate(0); }
+        }
+        .bell-alert-anim {
+            animation: bellWiggle 2.2s ease-in-out infinite;
+            transform-origin: top center;
+        }
+    </style>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

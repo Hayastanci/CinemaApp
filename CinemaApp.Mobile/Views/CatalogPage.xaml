@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:CinemaApp.Mobile.ViewModels"
+             xmlns:dto="clr-namespace:CinemaApp.Core.DTOs;assembly=CinemaApp.Core"
+             x:Class="CinemaApp.Mobile.Views.CatalogPage"
+             x:DataType="vm:CatalogViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="#06080D">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*" Padding="16">
+        <!-- HEADER & LANGUAGE SELECTOR WITH REAL FLAGS -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12" VerticalOptions="Center">
+            <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                <Image Source="bartigran_logo.png"
+                       HeightRequest="40"
+                       WidthRequest="40"
+                       Aspect="AspectFit"
+                       HorizontalOptions="Start" />
+                <Label Text="BARTIGRAN MOVIE"
+                       FontSize="15"
+                       FontAttributes="Bold"
+                       TextColor="#06B6D4"
+                       CharacterSpacing="1"
+                       HorizontalOptions="Start" />
+            </VerticalStackLayout>
+
+            <!-- Language Pill Buttons with Flags -->
+            <Border Grid.Column="1"
+                    BackgroundColor="#121725"
+                    Stroke="#1E2638"
+                    StrokeShape="RoundRectangle 20"
+                    Padding="3"
+                    VerticalOptions="Center">
+                <HorizontalStackLayout Spacing="4">
+                    <Button x:Name="LangEnBtn"
+                            Text="🇺🇸 EN"
+                            Clicked="OnLangEnClicked"
+                            BackgroundColor="#06B6D4"
+                            TextColor="#06080D"
+                            FontSize="11"
+                            FontAttributes="Bold"
+                            CornerRadius="16"
+                            Padding="8,4"
+                            HeightRequest="32" />
+
+                    <Button x:Name="LangHyBtn"
+                            Text="🇦🇲 HY"
+                            Clicked="OnLangHyClicked"
+                            BackgroundColor="#141A29"
+                            TextColor="#94A3B8"
+                            FontSize="11"
+                            FontAttributes="Bold"
+                            CornerRadius="16"
+                            Padding="8,4"
+                            HeightRequest="32" />
+
+                    <Button x:Name="LangRuBtn"
+                            Text="🇷🇺 RU"
+                            Clicked="OnLangRuClicked"
+                            BackgroundColor="#141A29"
+                            TextColor="#94A3B8"
+                            FontSize="11"
+                            FontAttributes="Bold"
+                            CornerRadius="16"
+                            Padding="8,4"
+                            HeightRequest="32" />
+                </HorizontalStackLayout>
+            </Border>
+        </Grid>
+
+        <!-- SEARCH BAR -->
+        <SearchBar Grid.Row="1"
+                   Placeholder="Search movies, genres..."
+                   Text="{Binding SearchQuery}"
+                   SearchCommand="{Binding LoadCategoriesAndMoviesCommand}"
+                   TextColor="#F8FAFC"
+                   PlaceholderColor="#64748B"
+                   BackgroundColor="#141A29"
+                   Margin="0,0,0,10" />
+
+        <!-- ACTIVE FILTER BANNER (PROMINENT CLEAR FILTER BUTTON) -->
+        <Border Grid.Row="2"
+                IsVisible="{Binding HasActiveFilter}"
+                BackgroundColor="#1E2638"
+                Stroke="#F43F5E"
+                StrokeShape="RoundRectangle 10"
+                Padding="12,6"
+                Margin="0,0,0,10">
+            <Grid ColumnDefinitions="*,Auto">
+                <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                    <Label Text="🏷️" FontSize="14" VerticalOptions="Center" />
+                    <Label Text="{Binding ActiveFilterLabel}"
+                           TextColor="#FDA4AF"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <Button Grid.Column="1"
+                        Text="{Binding RemoveFilterButtonText}"
+                        Clicked="OnClearCategoryClicked"
+                        BackgroundColor="#BE123C"
+                        TextColor="#FFFFFF"
+                        CornerRadius="8"
+                        Padding="10,4"
+                        HeightRequest="32"
+                        FontSize="11"
+                        FontAttributes="Bold" />
+            </Grid>
+        </Border>
+
+        <!-- CATEGORIES HORIZONTAL CAROUSEL -->
+        <ScrollView Grid.Row="3" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Margin="0,0,0,14">
+            <HorizontalStackLayout Spacing="8">
+                <!-- Static Remove Filter Button (never wiped by BindableLayout) -->
+                <Button x:Name="RemoveFilterButton"
+                        Text="{Binding RemoveFilterButtonText}"
+                        IsVisible="{Binding HasActiveFilter}"
+                        Clicked="OnClearCategoryClicked"
+                        BackgroundColor="#BE123C"
+                        TextColor="#FFFFFF"
+                        CornerRadius="20"
+                        Padding="14,6"
+                        FontSize="12"
+                        FontAttributes="Bold" />
+
+                <!-- Static "All" clear-filter button with localized text -->
+                <Button x:Name="AllCategoriesButton"
+                        Text="{Binding AllFilterButtonText}"
+                        Clicked="OnClearCategoryClicked"
+                        BackgroundColor="#06B6D4"
+                        TextColor="#06080D"
+                        CornerRadius="20"
+                        Padding="14,6"
+                        FontSize="12"
+                        FontAttributes="Bold" />
+
+                <!-- Dynamic Categories in their own container so static buttons are preserved -->
+                <HorizontalStackLayout Spacing="8" x:Name="CategoriesLayout">
+                    <BindableLayout.ItemsSource>
+                        <Binding Path="Categories" />
+                    </BindableLayout.ItemsSource>
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="dto:CategoryDto">
+                            <Button Text="{Binding Name}"
+                                    Clicked="OnCategoryClicked"
+                                    BackgroundColor="#141A29"
+                                    TextColor="#94A3B8"
+                                    CornerRadius="20"
+                                    Padding="14,6"
+                                    FontSize="12" />
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <!-- MOVIES GRID -->
+        <RefreshView Grid.Row="4"
+                     IsRefreshing="{Binding IsBusy}"
+                     Command="{Binding LoadCategoriesAndMoviesCommand}">
+            <Grid>
+                <CollectionView ItemsSource="{Binding Movies}"
+                                SelectionMode="None">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="12" VerticalItemSpacing="16" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dto:MovieSummaryDto">
+                            <Border BackgroundColor="#121725"
+                                    Stroke="#1E2638"
+                                    StrokeThickness="1"
+                                    StrokeShape="RoundRectangle 10"
+                                    Padding="8">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnMovieTapped" CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+
+                                <VerticalStackLayout Spacing="6">
+                                    <Image Source="{Binding PosterUrl}"
+                                           Aspect="AspectFill"
+                                           HeightRequest="180"
+                                           BackgroundColor="#0D1117" />
+
+                                    <Label Text="{Binding Title}"
+                                           FontSize="14"
+                                           FontAttributes="Bold"
+                                           TextColor="#F8FAFC"
+                                           MaxLines="1"
+                                           LineBreakMode="TailTruncation" />
+
+                                    <Label Text="{Binding Genres}"
+                                           FontSize="11"
+                                           TextColor="#06B6D4"
+                                           MaxLines="1"
+                                           LineBreakMode="TailTruncation" />
+
+                                    <Label Text="{Binding ReleaseYear, StringFormat='{0} • HD'}"
+                                           FontSize="11"
+                                           TextColor="#64748B" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                   IsVisible="{Binding IsBusy}"
+                                   Color="#06B6D4"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="Center" />
+
+                <VerticalStackLayout IsVisible="{Binding ShowEmptyState}"
+                                     Spacing="10"
+                                     VerticalOptions="Center"
+                                     HorizontalOptions="Center"
+                                     Padding="24">
+                    <Label Text="🎬"
+                           FontSize="48"
+                           HorizontalTextAlignment="Center" />
+                    <Label Text="No movies available"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="#F8FAFC"
+                           HorizontalTextAlignment="Center" />
+                    <Label Text="Cannot reach the server. Make sure the CinemaApp web server is running on port 5109 and this device can reach it."
+                           FontSize="13"
+                           TextColor="#64748B"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Grid>
+        </RefreshView>
+    </Grid>
+</ContentPage>

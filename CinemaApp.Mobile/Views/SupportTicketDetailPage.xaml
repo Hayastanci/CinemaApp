@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="CinemaApp.Mobile.Views.SupportTicketDetailPage"
+             Title="Ticket Details"
+             BackgroundColor="#06080D">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Ticket Header Card -->
+        <Border Grid.Row="0"
+                BackgroundColor="#121725"
+                Stroke="#1E2638"
+                StrokeThickness="1"
+                Padding="16"
+                Margin="12,12,12,6">
+            <VerticalStackLayout Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <HorizontalStackLayout Spacing="8">
+                        <Label x:Name="TicketIdLabel"
+                               Text="#1"
+                               FontSize="12"
+                               FontAttributes="Bold"
+                               TextColor="#64748B"
+                               VerticalOptions="Center" />
+                        <Border x:Name="StatusBorder"
+                                BackgroundColor="#10B981"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 6"
+                                Padding="8,2">
+                            <Label x:Name="StatusLabel"
+                                   Text="OPEN"
+                                   FontSize="10"
+                                   FontAttributes="Bold"
+                                   TextColor="#06080D" />
+                        </Border>
+                        <Border BackgroundColor="#1E2638"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 6"
+                                Padding="8,2">
+                            <Label x:Name="CategoryLabel"
+                                   Text="General"
+                                   FontSize="10"
+                                   TextColor="#94A3B8" />
+                        </Border>
+                    </HorizontalStackLayout>
+
+                    <!-- Admin Status Picker or User Close Button -->
+                    <Button Grid.Column="1"
+                            x:Name="CloseTicketButton"
+                            Text="Close Ticket"
+                            Clicked="OnCloseTicketClicked"
+                            BackgroundColor="#7F1D1D"
+                            TextColor="#FECACA"
+                            FontSize="11"
+                            FontAttributes="Bold"
+                            HeightRequest="32"
+                            Padding="10,0"
+                            CornerRadius="6"
+                            IsVisible="False" />
+                </Grid>
+
+                <Label x:Name="SubjectLabel"
+                       Text="Subject"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       TextColor="#F8FAFC" />
+
+                <!-- Admin Status Controls Row -->
+                <Grid x:Name="AdminControlsGrid" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" IsVisible="False">
+                    <Label Text="Status:"
+                           FontSize="12"
+                           TextColor="#94A3B8"
+                           VerticalOptions="Center" />
+                    <Picker Grid.Column="1"
+                            x:Name="AdminStatusPicker"
+                            TextColor="#F8FAFC"
+                            Title="Status"
+                            FontSize="12">
+                        <Picker.ItemsSource>
+                            <x:Array Type="{x:Type x:String}">
+                                <x:String>Open</x:String>
+                                <x:String>InProgress</x:String>
+                                <x:String>Resolved</x:String>
+                                <x:String>Closed</x:String>
+                            </x:Array>
+                        </Picker.ItemsSource>
+                    </Picker>
+                    <Button Grid.Column="2"
+                            Text="Update"
+                            Clicked="OnUpdateStatusClicked"
+                            BackgroundColor="#06B6D4"
+                            TextColor="#06080D"
+                            FontSize="11"
+                            FontAttributes="Bold"
+                            HeightRequest="32"
+                            Padding="10,0"
+                            CornerRadius="6" />
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- Message Thread -->
+        <ScrollView Grid.Row="1" x:Name="MessagesScrollView" Padding="12,6">
+            <VerticalStackLayout x:Name="MessagesContainer" Spacing="10">
+                <!-- Message bubbles are injected dynamically -->
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Bottom Reply Bar -->
+        <Border Grid.Row="2"
+                BackgroundColor="#0F1420"
+                Stroke="#1E2638"
+                StrokeThickness="1"
+                Padding="10,8">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <Border BackgroundColor="#161E30"
+                        Stroke="#1E2638"
+                        StrokeShape="RoundRectangle 8"
+                        Padding="12,0">
+                    <Entry x:Name="ReplyEntry"
+                           Placeholder="Type your reply..."
+                           TextColor="#F8FAFC"
+                           PlaceholderColor="#64748B"
+                           BackgroundColor="Transparent"
+                           HeightRequest="42" />
+                </Border>
+                <Button Grid.Column="1"
+                        x:Name="SendButton"
+                        Text="Send"
+                        Clicked="OnSendReplyClicked"
+                        BackgroundColor="#06B6D4"
+                        TextColor="#06080D"
+                        FontAttributes="Bold"
+                        CornerRadius="8"
+                        HeightRequest="42"
+                        WidthRequest="72" />
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>
