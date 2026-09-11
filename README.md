@@ -120,14 +120,29 @@ CinemaApp/
 
 ## 🚢 Deployment Options
 
-### Option A: Docker Deployment (Recommended for Linux)
-Run with a single command to deploy MySQL 8.4 and the ASP.NET Core 10 container equipped with Linux FFmpeg:
+### Option A: Docker Deployment & GitHub Container Registry
 
+#### 1. Build and Run Locally from Source
 ```bash
-cd CinemaApp
+# Optional: customize environment variables
+cp .env.example .env
+
+# Build the .NET 10 + FFmpeg image and start MySQL
 docker compose up --build -d
 ```
 The web app and API will be live on `http://localhost:8080`.
+
+#### 2. Run Pre-Built Image from GitHub Container Registry (GHCR)
+No .NET SDK or local compilation needed! Any server can pull the image built by GitHub Actions:
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+
+#### 3. Automated GitHub Actions CI/CD
+A GitHub Actions workflow is preconfigured in `.github/workflows/docker.yml`. When you push to `master`, GitHub Actions automatically:
+- Builds the multi-stage Dockerfile (.NET 10 LTS + Linux FFmpeg)
+- Publishes the container image to GitHub Container Registry: `ghcr.io/hayastanci/cinemaapp:latest`
+- Validates the Docker Compose orchestration
 
 ### Option B: Local Development
 ```bash

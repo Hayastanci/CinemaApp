@@ -1,0 +1,15 @@
+**/.git
+**/.gitignore
+**/.gitattributes
+**/.vs
+**/.vscode
+**/.idea
+**/bin/
+**/obj/
+CinemaApp.Mobile/
+**/*.user
+**/*.suo
+**/*.md
+Dockerfile
+docker-compose*.yml
+.env

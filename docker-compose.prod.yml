@@ -1,3 +1,6 @@
+# Production Docker Compose - Pulls pre-built image directly from GitHub Container Registry (GHCR)
+# No local .NET SDK or compilation required!
+
 services:
   # MySQL 8.4 LTS Database
   cinema-db:
@@ -22,11 +25,8 @@ services:
     networks:
       - cinema-network
 
-  # ASP.NET Core 10 Web App + FFmpeg Background Transcoder
+  # Pre-built ASP.NET Core 10 Web App + Linux FFmpeg from GitHub Container Registry
   cinema-web:
-    build:
-      context: .
-      dockerfile: Dockerfile
     image: ghcr.io/hayastanci/cinemaapp:latest
     container_name: cinema_web
     restart: always
