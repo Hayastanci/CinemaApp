@@ -74,8 +74,31 @@ public class VideoTranscodingWorker : BackgroundService
                         }
                     }
 
+                    if (pipelineResult.Success)
+                    {
+                        movie.MasterVideoPath = null;
+                    }
+
                     await dbContext.SaveChangesAsync(stoppingToken);
                     _logger.LogInformation("Successfully saved transcoded media streams into database for Movie Id: {MovieId}", movie.Id);
+                }
+
+                // Delete the staged master video to free disk space (applies in both Docker production & local dev)
+                if (pipelineResult.Success && !string.IsNullOrWhiteSpace(job.StagingFilePath))
+                {
+                    try
+                    {
+                        if (File.Exists(job.StagingFilePath))
+                        {
+                            var fileSizeMb = (new FileInfo(job.StagingFilePath).Length / (1024.0 * 1024.0)).ToString("0.0");
+                            File.Delete(job.StagingFilePath);
+                            _logger.LogInformation("Deleted staged master video after successful transcoding: {Path} ({SizeMb} MB reclaimed)", job.StagingFilePath, fileSizeMb);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Could not delete staged master video file: {Path}", job.StagingFilePath);
+                    }
                 }
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

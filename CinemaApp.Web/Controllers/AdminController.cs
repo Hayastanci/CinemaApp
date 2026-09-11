@@ -367,7 +367,30 @@ public class AdminController : Controller
         _dbContext.Movies.Remove(movie);
         await _dbContext.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = $"Movie #{id} deleted.";
+        // Clean up disk assets (staging file and transcoded movie folder)
+        try
+        {
+            var mediaRoot = _configuration["FFmpeg:MediaRoot"]
+                ?? (OperatingSystem.IsWindows() ? @"F:\Projects\Hayastanci\Cinema\CinemaMedia" : "/var/www/cinema/media");
+
+            var stagingFile = Path.Combine(mediaRoot, "staging", $"{id}.mp4");
+            if (System.IO.File.Exists(stagingFile))
+            {
+                System.IO.File.Delete(stagingFile);
+            }
+
+            var movieDir = Path.Combine(mediaRoot, "movies", id.ToString());
+            if (Directory.Exists(movieDir))
+            {
+                Directory.Delete(movieDir, true);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not completely remove disk files for Movie #{MovieId}", id);
+        }
+
+        TempData["SuccessMessage"] = $"Movie #{id} deleted and storage cleaned.";
         return RedirectToAction(nameof(Index));
     }
 
