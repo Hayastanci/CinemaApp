@@ -17,7 +17,7 @@ public static class ApiConfig
     /// Example: "https://cinema.bartigran.com" or "http://203.0.113.10:8080"
     /// </summary>
     public const string ProductionUrl = "https://cinema.bartigran.xyz";
-
+    //public const string ProductionUrl = "http://localhost:5109";
     public static readonly string[] Candidates =
     {
         // 1. Production / Custom Server endpoint (top priority when configured)
