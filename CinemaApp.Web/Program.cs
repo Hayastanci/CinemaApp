@@ -35,6 +35,7 @@ builder.Services.AddDbContext<CinemaDbContext>(options =>
 // 2. Core Business Services
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IAiContentService, AiContentService>();
+builder.Services.AddSingleton<ITranscodingStatusService, TranscodingStatusService>();
 builder.Services.AddSingleton<IFFmpegService, FFmpegService>();
 builder.Services.AddSingleton<ITranscodingQueue, TranscodingQueue>();
 builder.Services.AddSingleton<ITokenService, JwtTokenService>();

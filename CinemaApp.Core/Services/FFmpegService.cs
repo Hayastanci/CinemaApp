@@ -8,11 +8,16 @@ public class FFmpegService : IFFmpegService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<FFmpegService> _logger;
+    private readonly ITranscodingStatusService _statusService;
 
-    public FFmpegService(IConfiguration configuration, ILogger<FFmpegService> logger)
+    public FFmpegService(
+        IConfiguration configuration,
+        ILogger<FFmpegService> logger,
+        ITranscodingStatusService statusService)
     {
         _configuration = configuration;
         _logger = logger;
+        _statusService = statusService;
     }
 
     private string GetFFmpegBinary()
@@ -69,9 +74,11 @@ public class FFmpegService : IFFmpegService
         try
         {
             // 1. Extract Poster at 00:00:10
+            _statusService.UpdateProgress(movieId, 10, "Extracting poster thumbnail frame...");
             await ExtractThumbnailAsync(stagingSourcePath, posterPath, "00:00:10", cancellationToken);
 
             // 2. Transcode 1080p (Bitrate: ~4500k, 1920x1080)
+            _statusService.UpdateProgress(movieId, 20, "Transcoding 1080p Full HD video stream...");
             var p1080 = await TranscodeQualityAsync(
                 stagingSourcePath,
                 Path.Combine(movieDir, "1080p.mp4"),
@@ -79,6 +86,7 @@ public class FFmpegService : IFFmpegService
             streams.Add(p1080);
 
             // 3. Transcode 720p (Bitrate: ~2500k, 1280x720)
+            _statusService.UpdateProgress(movieId, 45, "1080p ready. Transcoding 720p HD video stream...", "1080p");
             var p720 = await TranscodeQualityAsync(
                 stagingSourcePath,
                 Path.Combine(movieDir, "720p.mp4"),
@@ -86,6 +94,7 @@ public class FFmpegService : IFFmpegService
             streams.Add(p720);
 
             // 4. Transcode 480p (Bitrate: ~1200k, 854x480)
+            _statusService.UpdateProgress(movieId, 70, "720p ready. Transcoding 480p SD video stream...", "720p");
             var p480 = await TranscodeQualityAsync(
                 stagingSourcePath,
                 Path.Combine(movieDir, "480p.mp4"),
@@ -93,17 +102,22 @@ public class FFmpegService : IFFmpegService
             streams.Add(p480);
 
             // 5. Transcode 360p (Bitrate: ~800k, 640x360)
+            _statusService.UpdateProgress(movieId, 90, "480p ready. Transcoding 360p SD mobile stream...", "480p");
             var p360 = await TranscodeQualityAsync(
                 stagingSourcePath,
                 Path.Combine(movieDir, "360p.mp4"),
                 "360p", 640, 360, 800, cancellationToken);
             streams.Add(p360);
 
+            var readyQualities = streams.Where(s => s.Success).Select(s => s.Quality).ToList();
+            _statusService.SetCompleted(movieId, readyQualities);
+
             _logger.LogInformation("FFmpeg transcoding pipeline completed successfully for Movie Id: {MovieId}", movieId);
             return new TranscodingPipelineResult(movieId, posterPath, streams, true);
         }
         catch (Exception ex)
         {
+            _statusService.SetFailed(movieId, ex.Message);
             _logger.LogError(ex, "FFmpeg pipeline failed for Movie Id: {MovieId}", movieId);
             return new TranscodingPipelineResult(movieId, posterPath, streams, false, ex.Message);
         }

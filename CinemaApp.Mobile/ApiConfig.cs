@@ -16,7 +16,7 @@ public static class ApiConfig
     /// Set this to your production domain or VPS public IP when deploying Docker to production.
     /// Example: "https://cinema.bartigran.com" or "http://203.0.113.10:8080"
     /// </summary>
-    public const string ProductionUrl = "http://localhost:5109";
+    public const string ProductionUrl = "https://cinema.bartigran.xyz";
 
     public static readonly string[] Candidates =
     {

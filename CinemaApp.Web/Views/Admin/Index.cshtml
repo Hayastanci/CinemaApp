@@ -78,6 +78,22 @@
         </a>
     </div>
 
+    <!-- Active FFmpeg Video Conversions Widget (Visible whenever conversion jobs are active) -->
+    <div id="activeConversionsCard" class="admin-card" style="display: none; margin-bottom: 2rem; border-color: var(--accent-cyan); background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(18, 23, 37, 0.85));">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                <span style="font-size: 1.25rem;">⚙️</span>
+                <h3 style="font-size: 1.15rem; margin: 0; color: #fff;">Active FFmpeg Video Conversions</h3>
+            </div>
+            <span id="activeJobsCountBadge" style="font-size: 0.75rem; background: rgba(6, 182, 212, 0.2); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 3px 8px; border-radius: 4px; font-weight: 700;">
+                0 Active
+            </span>
+        </div>
+        <div id="activeJobsList" style="display: flex; flex-direction: column; gap: 0.85rem;">
+            <!-- Populated via JS polling -->
+        </div>
+    </div>
+
     <!-- Recent Movies Table -->
     <div class="admin-card">
         <h2 style="font-size: 1.4rem; margin-bottom: 1.5rem;">Movie Catalog & Streams</h2>
@@ -108,11 +124,20 @@
                             <td style="padding: 1rem; color: var(--text-muted);">@m.ReleaseYear</td>
                             <td style="padding: 1rem; color: var(--text-muted);">@m.DurationMinutes min</td>
                             <td style="padding: 1rem;">
-                                <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
-                                    @foreach (var q in m.AvailableQualities)
+                                <div id="stream_badges_@m.Id" style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                                    @if (m.AvailableQualities.Any())
                                     {
-                                        <span style="background: rgba(6, 182, 212, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
-                                            @q
+                                        @foreach (var q in m.AvailableQualities)
+                                        {
+                                            <span style="background: rgba(6, 182, 212, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">
+                                                @q
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span id="stream_status_@m.Id" style="background: rgba(245, 158, 11, 0.15); border: 1px solid var(--accent-gold); color: var(--accent-gold); font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+                                            <span>⚙️</span> In Queue / Converting...
                                         </span>
                                     }
                                 </div>
@@ -139,3 +164,61 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        async function checkActiveTranscodings() {
+            try {
+                const resp = await fetch('/api/v1/transcoding/active');
+                if (!resp.ok) return;
+                const jobs = await resp.json();
+
+                const card = document.getElementById('activeConversionsCard');
+                const badge = document.getElementById('activeJobsCountBadge');
+                const list = document.getElementById('activeJobsList');
+
+                if (!jobs || jobs.length === 0) {
+                    card.style.display = 'none';
+                    return;
+                }
+
+                card.style.display = 'block';
+                badge.innerText = `${jobs.length} Active Conversion${jobs.length > 1 ? 's' : ''}`;
+
+                let html = '';
+                jobs.forEach(job => {
+                    const percent = Math.max(5, job.percent || 0);
+                    html += `
+                        <div style="background: rgba(0, 0, 0, 0.3); padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; font-size: 0.85rem;">
+                                <div>
+                                    <strong style="color: #fff;">Movie #${job.movieId}</strong>
+                                    <span style="color: var(--text-dim); margin: 0 6px;">•</span>
+                                    <span style="color: var(--accent-cyan);">${job.currentStep || 'Processing...'}</span>
+                                </div>
+                                <span style="font-weight: 700; color: var(--accent-gold);">${percent}%</span>
+                            </div>
+                            <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 999px; overflow: hidden;">
+                                <div style="width: ${percent}%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), #8b5cf6); border-radius: 999px; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                    `;
+
+                    // Update row status badge if found on page
+                    const rowBadge = document.getElementById('stream_status_' + job.movieId);
+                    if (rowBadge) {
+                        rowBadge.innerHTML = `<span>⚙️</span> ${percent}% (${job.currentStep || 'Converting...'})`;
+                    }
+                });
+
+                list.innerHTML = html;
+            } catch (e) {
+                console.warn('Could not poll active transcodings', e);
+            }
+        }
+
+        // Poll every 2 seconds
+        checkActiveTranscodings();
+        setInterval(checkActiveTranscodings, 2000);
+    </script>
+}

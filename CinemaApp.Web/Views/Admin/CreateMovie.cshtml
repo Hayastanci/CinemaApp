@@ -60,7 +60,7 @@
             <div id="aiStatusAlert" style="display: none; padding: 0.75rem 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.9rem;"></div>
         }
 
-        <form asp-action="@(editMode ? "EditMovie" : "CreateMovie")" method="post" enctype="multipart/form-data">
+        <form id="movieForm" asp-action="@(editMode ? "EditMovie" : "CreateMovie")" method="post" enctype="multipart/form-data">
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="PosterUrl" />
             <input type="hidden" asp-for="BannerUrl" />
@@ -156,13 +156,94 @@
                     <input type="file" name="masterVideo" id="masterVideoInput" accept="video/*" style="display: none;" onchange="updateFileName(this)" />
                     <div id="selectedFileName" style="margin-top: 0.75rem; color: var(--accent-gold); font-weight: 600; font-size: 0.9rem;"></div>
                 </div>
+
+                <!-- REAL-TIME UPLOAD PROGRESS PANEL -->
+                <div id="uploadProgressSection" style="display: none; margin-top: 2rem; background: var(--bg-surface); border: 1px solid var(--accent-cyan); border-radius: var(--radius-md); padding: 1.5rem; box-shadow: var(--shadow-glow);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <span id="uploadStatusIcon" style="font-size: 1.25rem;">⏳</span>
+                            <strong id="uploadStatusTitle" style="color: #fff; font-size: 1.05rem;">Uploading Master Video...</strong>
+                        </div>
+                        <span id="uploadPercentText" style="font-size: 1.35rem; font-weight: 800; color: var(--accent-cyan); font-family: var(--font-heading);">0%</span>
+                    </div>
+
+                    <!-- Animated Striped Progress Bar Track -->
+                    <div style="width: 100%; height: 16px; background: rgba(255, 255, 255, 0.08); border-radius: 999px; overflow: hidden; position: relative; margin-bottom: 1rem; border: 1px solid rgba(255, 255, 255, 0.12);">
+                        <div id="uploadProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), #3b82f6, #8b5cf6); border-radius: 999px; transition: width 0.15s ease-out; box-shadow: 0 0 16px rgba(6, 182, 212, 0.8);"></div>
+                    </div>
+
+                    <!-- Phase 1: Live Upload Metrics Grid -->
+                    <div id="uploadMetricsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; background: rgba(0, 0, 0, 0.35); padding: 0.85rem 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <div>
+                            <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Uploaded / Total</div>
+                            <div id="uploadSizeText" style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-top: 2px;">0 MB / 0 MB</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Megabytes Remaining</div>
+                            <div id="uploadRemainingText" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-gold); margin-top: 2px;">0 MB left</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Transfer Speed</div>
+                            <div id="uploadSpeedText" style="font-size: 0.95rem; font-weight: 600; color: var(--accent-green); margin-top: 2px;">0.0 MB/s</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em;">Estimated Time Left</div>
+                            <div id="uploadEtaText" style="font-size: 0.95rem; font-weight: 600; color: var(--accent-cyan); margin-top: 2px;">Calculating...</div>
+                        </div>
+                    </div>
+
+                    <!-- Phase 2: Live Transcoding / Conversion Details -->
+                    <div id="conversionDetailsPanel" style="display: none; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <span style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 600;">Automated FFmpeg Multi-Stream Transcoder</span>
+                            <span id="conversionStepBadge" style="font-size: 0.8rem; background: rgba(6, 182, 212, 0.15); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 2px 8px; border-radius: 4px;">In Queue...</span>
+                        </div>
+                        <div id="conversionStepDescription" style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.85rem; font-weight: 500;">
+                            Waiting for FFmpeg worker...
+                        </div>
+
+                        <!-- Quality Badges Grid -->
+                        <div style="display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+                            <div id="quality_poster" style="padding: 0.4rem 0.8rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.35rem; transition: all 0.3s ease;">
+                                <span>🖼️</span> <span>Poster Frame</span>
+                            </div>
+                            <div id="quality_1080p" style="padding: 0.4rem 0.8rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.35rem; transition: all 0.3s ease;">
+                                <span>⚡</span> <span>1080p FHD</span>
+                            </div>
+                            <div id="quality_720p" style="padding: 0.4rem 0.8rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.35rem; transition: all 0.3s ease;">
+                                <span>⚡</span> <span>720p HD</span>
+                            </div>
+                            <div id="quality_480p" style="padding: 0.4rem 0.8rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.35rem; transition: all 0.3s ease;">
+                                <span>⚡</span> <span>480p SD</span>
+                            </div>
+                            <div id="quality_360p" style="padding: 0.4rem 0.8rem; border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.35rem; transition: all 0.3s ease;">
+                                <span>⚡</span> <span>360p Mobile</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Controls during/after conversion -->
+                        <div style="display: flex; gap: 1rem; align-items: center; justify-content: flex-end;">
+                            <a id="btnProceedDashboard" href="/Admin" class="btn btn-secondary btn-sm" style="font-size: 0.85rem;">
+                                <span>↗</span> Proceed to Dashboard (Runs in Background)
+                            </a>
+                            <a id="btnWatchPreview" href="#" target="_blank" class="btn btn-primary btn-sm" style="display: none; font-size: 0.85rem;">
+                                <span>▶</span> Preview Movie Stream
+                            </a>
+                        </div>
+                    </div>
+
+                    <div id="uploadNoticeMsg" style="margin-top: 0.85rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">
+                        Please keep this browser window open until the upload and database initialization complete.
+                    </div>
+                </div>
             </div>
 
             <!-- SUBMIT BUTTON -->
             <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
-                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem;">
-                    <span>✓</span> @(editMode ? "Save Changes" : "Save Movie & Initiate Transcoding")
+                <a asp-action="Index" id="btnCancelMovie" class="btn btn-secondary">Cancel</a>
+                <button type="submit" id="btnSubmitMovie" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem;">
+                    <span id="btnSubmitIcon">✓</span>
+                    <span id="btnSubmitText">@(editMode ? "Save Changes" : "Save Movie & Initiate Transcoding")</span>
                 </button>
             </div>
         </form>
@@ -182,15 +263,347 @@
             if (targetPanel) targetPanel.classList.add('active');
         }
 
+        function formatBytes(bytes) {
+            if (!bytes || bytes === 0) return '0 MB';
+            const mb = bytes / (1024 * 1024);
+            if (mb >= 1024) {
+                return (mb / 1024).toFixed(2) + ' GB';
+            }
+            return mb.toFixed(1) + ' MB';
+        }
+
+        function formatTime(seconds) {
+            if (seconds < 60) {
+                return `~${seconds}s left`;
+            }
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            if (mins < 60) {
+                return `~${mins}m ${secs}s left`;
+            }
+            const hours = Math.floor(mins / 60);
+            const remMins = mins % 60;
+            return `~${hours}h ${remMins}m left`;
+        }
+
         function updateFileName(input) {
             const display = document.getElementById('selectedFileName');
             if (input.files && input.files.length > 0) {
                 const file = input.files[0];
-                const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
-                display.innerText = `Selected File: ${file.name} (${sizeMb} MB) - Ready for automated staging and encoding`;
+                display.innerHTML = `<strong>Selected:</strong> ${file.name} <span style="color: var(--accent-cyan);">(${formatBytes(file.size)})</span> — Ready for upload and automated transcoding`;
             } else {
                 display.innerText = '';
             }
+        }
+
+        // Drag and drop support on file upload zone
+        const uploadZone = document.querySelector('.file-upload-zone');
+        const fileInput = document.getElementById('masterVideoInput');
+
+        if (uploadZone && fileInput) {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadZone.style.borderColor = 'var(--accent-cyan)';
+                    uploadZone.style.background = 'rgba(6, 182, 212, 0.08)';
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    uploadZone.style.borderColor = '';
+                    uploadZone.style.background = '';
+                }, false);
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                if (dt && dt.files && dt.files.length > 0) {
+                    fileInput.files = dt.files;
+                    updateFileName(fileInput);
+                }
+            }, false);
+        }
+
+        // Intercept form submission to provide real-time upload progress with MB remaining
+        const movieForm = document.getElementById('movieForm');
+        const submitBtn = document.getElementById('btnSubmitMovie');
+        const cancelBtn = document.getElementById('btnCancelMovie');
+        const submitText = document.getElementById('btnSubmitText');
+        const submitIcon = document.getElementById('btnSubmitIcon');
+
+        if (movieForm) {
+            movieForm.addEventListener('submit', function (e) {
+                // If no video is selected, use standard browser submission
+                if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                    return;
+                }
+
+                // Check HTML5 form validation (required titles, etc.)
+                if (!movieForm.checkValidity()) {
+                    movieForm.reportValidity();
+                    return;
+                }
+
+                e.preventDefault();
+
+                const file = fileInput.files[0];
+                const totalBytes = file.size;
+
+                const progressSection = document.getElementById('uploadProgressSection');
+                const progressBar = document.getElementById('uploadProgressBar');
+                const percentText = document.getElementById('uploadPercentText');
+                const sizeText = document.getElementById('uploadSizeText');
+                const remainingText = document.getElementById('uploadRemainingText');
+                const speedText = document.getElementById('uploadSpeedText');
+                const etaText = document.getElementById('uploadEtaText');
+                const statusTitle = document.getElementById('uploadStatusTitle');
+                const statusIcon = document.getElementById('uploadStatusIcon');
+                const uploadNoticeMsg = document.getElementById('uploadNoticeMsg');
+
+                // Reveal progress section with smooth transition
+                progressSection.style.display = 'block';
+                progressSection.style.borderColor = 'var(--accent-cyan)';
+                statusTitle.style.color = '#fff';
+                statusTitle.innerText = 'Uploading Master Video...';
+                statusIcon.innerText = '⏳';
+                uploadNoticeMsg.style.display = 'block';
+                uploadNoticeMsg.style.color = 'var(--text-muted)';
+                uploadNoticeMsg.innerText = 'Please keep this browser window open until the upload and database initialization complete.';
+
+                progressSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // Lock submit buttons to prevent double-submits
+                submitBtn.disabled = true;
+                if (cancelBtn) cancelBtn.style.pointerEvents = 'none';
+                submitIcon.innerText = '⏳';
+                submitText.innerText = 'Uploading Video...';
+
+                const formData = new FormData(movieForm);
+                const xhr = new XMLHttpRequest();
+                const startTime = Date.now();
+                let lastLoaded = 0;
+                let lastTime = startTime;
+
+                xhr.upload.onprogress = function (event) {
+                    if (!event.lengthComputable) return;
+
+                    const loaded = event.loaded;
+                    const total = event.total;
+                    const percent = Math.min(99, Math.round((loaded / total) * 100));
+
+                    progressBar.style.width = percent + '%';
+                    percentText.innerText = percent + '%';
+
+                    const uploadedStr = formatBytes(loaded);
+                    const totalStr = formatBytes(total);
+                    const remainingBytes = Math.max(0, total - loaded);
+                    const remainingStr = formatBytes(remainingBytes);
+
+                    sizeText.innerText = `${uploadedStr} / ${totalStr}`;
+                    remainingText.innerText = `${remainingStr} left`;
+
+                    // Calculate upload speed & ETA
+                    const now = Date.now();
+                    const timeDiff = (now - lastTime) / 1000;
+                    if (timeDiff >= 0.4 || loaded === total) {
+                        const bytesDiff = loaded - lastLoaded;
+                        const bytesPerSec = bytesDiff / timeDiff;
+                        const mbPerSec = (bytesPerSec / (1024 * 1024)).toFixed(1);
+                        speedText.innerText = `${mbPerSec} MB/s`;
+
+                        if (bytesPerSec > 0 && remainingBytes > 0) {
+                            const remainingSeconds = Math.round(remainingBytes / bytesPerSec);
+                            etaText.innerText = formatTime(remainingSeconds);
+                        } else if (remainingBytes === 0) {
+                            etaText.innerText = '0s';
+                        }
+
+                        lastLoaded = loaded;
+                        lastTime = now;
+                    }
+                };
+
+                xhr.upload.onload = function () {
+                    progressBar.style.width = '100%';
+                    percentText.innerText = '100%';
+                    statusIcon.innerText = '⚙️';
+                    statusTitle.innerText = 'Upload complete! Staging video & initiating FFmpeg transcoding queue...';
+                    remainingText.innerText = '0 MB (Complete)';
+                    speedText.innerText = 'Processing...';
+                    etaText.innerText = 'Finalizing';
+                };
+
+                xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 400) {
+                        let resData = null;
+                        try {
+                            resData = JSON.parse(xhr.responseText);
+                        } catch (e) { }
+
+                        if (resData && resData.success && resData.hasVideo && resData.movieId) {
+                            startConversionTracking(resData.movieId, resData.redirectUrl);
+                        } else {
+                            statusIcon.innerText = '✅';
+                            statusTitle.innerText = 'Success! Redirecting to catalog...';
+                            window.location.href = xhr.responseURL || '/Admin';
+                        }
+                    } else {
+                        handleUploadError(xhr);
+                    }
+                };
+
+                xhr.onerror = function () {
+                    handleUploadError(xhr);
+                };
+
+                xhr.onabort = function () {
+                    statusIcon.innerText = '⚠️';
+                    statusTitle.innerText = 'Upload cancelled.';
+                    resetSubmitButton();
+                };
+
+                function handleUploadError(req) {
+                    progressSection.style.borderColor = 'var(--accent-rose)';
+                    statusTitle.innerText = 'Upload Failed';
+                    statusTitle.style.color = 'var(--accent-rose)';
+                    statusIcon.innerText = '❌';
+
+                    let errMsg = `Upload failed with HTTP ${req.status || 'Connection Error'}.`;
+                    if (req.status === 413) {
+                        errMsg += ' (413 Payload Too Large) Cloudflare or reverse proxy blocked this file. In Cloudflare DNS, set the record to DNS-only (Grey Cloud) and ensure Nginx client_max_body_size is set to 50G.';
+                    }
+
+                    uploadNoticeMsg.style.display = 'block';
+                    uploadNoticeMsg.style.color = '#fda4af';
+                    uploadNoticeMsg.innerText = errMsg;
+
+                    resetSubmitButton();
+                }
+
+                function resetSubmitButton() {
+                    submitBtn.disabled = false;
+                    if (cancelBtn) cancelBtn.style.pointerEvents = 'auto';
+                    submitIcon.innerText = '↻';
+                    submitText.innerText = 'Retry Save & Upload';
+                }
+
+                xhr.open(movieForm.method || 'POST', movieForm.action, true);
+                xhr.send(formData);
+            });
+        }
+
+        function startConversionTracking(movieId, redirectUrl) {
+            const uploadMetricsGrid = document.getElementById('uploadMetricsGrid');
+            const conversionDetailsPanel = document.getElementById('conversionDetailsPanel');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const percentText = document.getElementById('uploadPercentText');
+            const statusTitle = document.getElementById('uploadStatusTitle');
+            const statusIcon = document.getElementById('uploadStatusIcon');
+            const stepDescription = document.getElementById('conversionStepDescription');
+            const stepBadge = document.getElementById('conversionStepBadge');
+            const uploadNoticeMsg = document.getElementById('uploadNoticeMsg');
+            const btnWatchPreview = document.getElementById('btnWatchPreview');
+            const btnProceedDashboard = document.getElementById('btnProceedDashboard');
+
+            if (btnProceedDashboard && redirectUrl) {
+                btnProceedDashboard.href = redirectUrl;
+            }
+
+            // Morph from upload phase to conversion phase
+            if (uploadMetricsGrid) uploadMetricsGrid.style.display = 'none';
+            if (conversionDetailsPanel) conversionDetailsPanel.style.display = 'block';
+
+            statusIcon.innerText = '⚙️';
+            statusTitle.innerText = 'Phase 2: Converting Video (FFmpeg Transcoder)...';
+            progressBar.style.background = 'linear-gradient(90deg, #10b981, #06b6d4, #8b5cf6)';
+            progressBar.style.width = '10%';
+            percentText.innerText = '10%';
+            if (uploadNoticeMsg) uploadNoticeMsg.style.display = 'none';
+
+            let pollInterval = setInterval(async () => {
+                try {
+                    const resp = await fetch(`/api/v1/transcoding/status/${movieId}`);
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+
+                    if (data.percent !== undefined) {
+                        progressBar.style.width = Math.max(10, data.percent) + '%';
+                        percentText.innerText = data.percent + '%';
+                    }
+                    if (data.currentStep) {
+                        stepDescription.innerText = data.currentStep;
+                    }
+                    if (data.status) {
+                        stepBadge.innerText = data.status;
+                    }
+
+                    if (data.completedQualities && Array.isArray(data.completedQualities)) {
+                        data.completedQualities.forEach(q => {
+                            const el = document.getElementById('quality_' + q);
+                            if (el) {
+                                el.style.borderColor = 'var(--accent-green)';
+                                el.style.background = 'rgba(16, 185, 129, 0.15)';
+                                el.style.color = '#6ee7b7';
+                                el.innerHTML = `<span>✓</span> <span>${q} Ready</span>`;
+                            }
+                        });
+                    }
+
+                    if (data.percent >= 15) {
+                        const posterEl = document.getElementById('quality_poster');
+                        if (posterEl) {
+                            posterEl.style.borderColor = 'var(--accent-green)';
+                            posterEl.style.background = 'rgba(16, 185, 129, 0.15)';
+                            posterEl.style.color = '#6ee7b7';
+                            posterEl.innerHTML = `<span>✓</span> <span>Poster Ready</span>`;
+                        }
+                    }
+
+                    if (data.status === 'Completed' || data.percent >= 100) {
+                        clearInterval(pollInterval);
+                        progressBar.style.width = '100%';
+                        percentText.innerText = '100%';
+                        statusIcon.innerText = '✅';
+                        statusTitle.innerText = 'Video Conversion Complete!';
+                        statusTitle.style.color = 'var(--accent-green)';
+                        stepBadge.innerText = 'Completed';
+                        stepBadge.style.borderColor = 'var(--accent-green)';
+                        stepBadge.style.color = '#6ee7b7';
+                        stepDescription.innerHTML = '<strong style="color: #6ee7b7;">All video streams (1080p, 720p, 480p, 360p) and poster frame are ready for playback!</strong>';
+
+                        ['poster', '1080p', '720p', '480p', '360p'].forEach(q => {
+                            const el = document.getElementById('quality_' + q);
+                            if (el) {
+                                el.style.borderColor = 'var(--accent-green)';
+                                el.style.background = 'rgba(16, 185, 129, 0.15)';
+                                el.style.color = '#6ee7b7';
+                            }
+                        });
+
+                        if (btnWatchPreview) {
+                            btnWatchPreview.href = `/Home/Watch/${movieId}`;
+                            btnWatchPreview.style.display = 'inline-flex';
+                        }
+
+                        // Auto-navigate after 3.5 seconds
+                        setTimeout(() => {
+                            window.location.href = redirectUrl || '/Admin';
+                        }, 3500);
+                    } else if (data.status === 'Failed') {
+                        clearInterval(pollInterval);
+                        statusIcon.innerText = '⚠️';
+                        statusTitle.innerText = 'Conversion Encountered an Issue';
+                        statusTitle.style.color = 'var(--accent-rose)';
+                        stepDescription.innerText = data.errorMessage || 'Conversion failed, but fallback stream is available.';
+                    }
+                } catch (e) {
+                    console.warn('Transcoding poll error:', e);
+                }
+            }, 1000);
         }
 
         async function generateAiContent() {

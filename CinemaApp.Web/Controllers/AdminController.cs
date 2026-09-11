@@ -15,17 +15,20 @@ public class AdminController : Controller
 {
     private readonly CinemaDbContext _dbContext;
     private readonly ITranscodingQueue _transcodingQueue;
+    private readonly ITranscodingStatusService _transcodingStatusService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AdminController> _logger;
 
     public AdminController(
         CinemaDbContext dbContext,
         ITranscodingQueue transcodingQueue,
+        ITranscodingStatusService transcodingStatusService,
         IConfiguration configuration,
         ILogger<AdminController> logger)
     {
         _dbContext = dbContext;
         _transcodingQueue = transcodingQueue;
+        _transcodingStatusService = transcodingStatusService;
         _configuration = configuration;
         _logger = logger;
     }
@@ -190,6 +193,18 @@ public class AdminController : Controller
         var videoMessage = await StageMasterVideoAsync(movie, masterVideo);
         TempData["SuccessMessage"] = $"Movie #{movie.Id} created successfully. {videoMessage}";
 
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+            Request.Headers.Accept.ToString().Contains("application/json"))
+        {
+            return Json(new
+            {
+                success = true,
+                movieId = movie.Id,
+                hasVideo = masterVideo != null && masterVideo.Length > 0,
+                redirectUrl = Url.Action(nameof(Index))
+            });
+        }
+
         return RedirectToAction(nameof(Index));
     }
 
@@ -323,6 +338,18 @@ public class AdminController : Controller
 
         var videoMessage = await StageMasterVideoAsync(movie, masterVideo);
         TempData["SuccessMessage"] = $"Movie #{movie.Id} updated successfully. {videoMessage}";
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+            Request.Headers.Accept.ToString().Contains("application/json"))
+        {
+            return Json(new
+            {
+                success = true,
+                movieId = movie.Id,
+                hasVideo = masterVideo != null && masterVideo.Length > 0,
+                redirectUrl = Url.Action(nameof(Index))
+            });
+        }
 
         return RedirectToAction(nameof(Index));
     }
@@ -557,6 +584,7 @@ public class AdminController : Controller
             StagingFilePath = stagingFilePath,
             QueuedAt = DateTime.UtcNow
         });
+        _transcodingStatusService.SetQueued(movie.Id);
 
         return "New master video staged and queued for automated FFmpeg transcoding (1080p, 720p, 480p, 360p + Poster).";
     }
