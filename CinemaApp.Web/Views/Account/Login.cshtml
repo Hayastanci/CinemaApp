@@ -3,46 +3,87 @@
     var ui = Context.Request.Cookies["cinema_lang"] ?? "en-US";
 }
 
-<div class="content-wrapper" style="padding-top: 4rem; max-width: 440px;">
-    <div class="admin-card" style="box-shadow: var(--shadow-subtle);">
+<div class="content-wrapper" style="padding-top: 4rem; padding-bottom: 4rem; max-width: 440px;">
+    <div class="admin-card" style="box-shadow: var(--shadow-subtle); border-radius: var(--radius-lg); padding: 2.25rem;">
         <div style="text-align: center; margin-bottom: 2rem;">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🎬</div>
-            <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;">@UiStrings.Tr(ui, "Sign In")</h1>
-            <p style="color: var(--text-muted); font-size: 0.85rem;">@UiStrings.Tr(ui, "Access your CinemaApp streaming profile")</p>
+            <div style="font-size: 2.75rem; margin-bottom: 0.5rem; line-height: 1;">🎬</div>
+            <h1 style="font-size: 1.85rem; margin-bottom: 0.35rem; font-family: var(--font-heading);">@UiStrings.Tr(ui, "Sign In")</h1>
+            <p style="color: var(--text-muted); font-size: 0.88rem;">@UiStrings.Tr(ui, "Access your CinemaApp streaming profile")</p>
         </div>
 
-        @if (ViewBag.Error != null)
+        @if (TempData["SuccessMessage"] is string successMsg)
         {
-            <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid var(--accent-rose); color: #fda4af; padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.85rem;">
-                @ViewBag.Error
+            <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-green); color: #6ee7b7; padding: 0.85rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.88rem; display: flex; align-items: center; gap: 0.6rem;">
+                <span style="font-weight: bold; font-size: 1rem;">✓</span>
+                <span>@successMsg</span>
             </div>
         }
 
-        <form asp-action="Login" method="post">
+        @if (ViewBag.Error != null || TempData["ErrorMessage"] != null)
+        {
+            <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid var(--accent-rose); color: #fda4af; padding: 0.85rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.88rem; display: flex; align-items: center; gap: 0.6rem;">
+                <span style="font-weight: bold; font-size: 1rem;">✖</span>
+                <span>@(ViewBag.Error ?? TempData["ErrorMessage"])</span>
+            </div>
+        }
+
+        <form asp-action="Login" method="post" id="loginForm">
             <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
-            <div class="form-group">
-                <label class="form-label">@UiStrings.Tr(ui, "Email Address")</label>
-                <input type="email" name="email" class="form-control" placeholder="admin@cinema.local or user@cinema.local" required />
+            
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">@UiStrings.Tr(ui, "Email Address or Username")</label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1rem; color: var(--text-dim); pointer-events: none;">👤</span>
+                    <input type="text" id="loginEmail" name="email" class="form-control" style="padding-left: 2.6rem;" 
+                           placeholder="e.g. name@example.com or admin" required autocomplete="username" />
+                </div>
             </div>
 
             <div class="form-group" style="margin-bottom: 2rem;">
-                <label class="form-label">@UiStrings.Tr(ui, "Password")</label>
-                <input type="password" name="password" class="form-control" placeholder="••••••••" required />
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0;">@UiStrings.Tr(ui, "Password")</label>
+                    <button type="button" onclick="togglePasswordVisibility('loginPassword', this)" style="background: none; border: none; color: var(--text-dim); font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 0;">
+                        <span id="pwdEyeIcon">👁️</span> <span id="pwdEyeText">Show</span>
+                    </button>
+                </div>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1rem; color: var(--text-dim); pointer-events: none;">🔒</span>
+                    <input type="password" id="loginPassword" name="password" class="form-control" style="padding-left: 2.6rem;" 
+                           placeholder="••••••••" required autocomplete="current-password" />
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
-                @UiStrings.Tr(ui, "Sign In to Cinema")
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <span>@UiStrings.Tr(ui, "Sign In to Cinema")</span>
+                <span>→</span>
             </button>
         </form>
 
-        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
-            @UiStrings.Tr(ui, "Don't have an account?") <a asp-action="Register" style="color: var(--accent-cyan); font-weight: 600;">@UiStrings.Tr(ui, "Create one now")</a>
-        </div>
-
-        <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-surface); border-radius: var(--radius-sm); font-size: 0.75rem; color: var(--text-dim);">
-            <strong>@UiStrings.Tr(ui, "Demo Credentials:")</strong><br />
-            Admin: <code>admin@cinema.local</code> / <code>AdminPass123!</code><br />
-            Subscriber: <code>subscriber@cinema.local</code> / <code>UserPass123!</code>
+        <div style="text-align: center; margin-top: 1.75rem; font-size: 0.88rem; color: var(--text-muted);">
+            @UiStrings.Tr(ui, "Don't have an account?") 
+            <a asp-action="Register" style="color: var(--accent-cyan); font-weight: 700; text-decoration: underline; text-underline-offset: 3px;">
+                @UiStrings.Tr(ui, "Create one now")
+            </a>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function togglePasswordVisibility(fieldId, btn) {
+            const field = document.getElementById(fieldId);
+            const icon = btn.querySelector('#pwdEyeIcon');
+            const text = btn.querySelector('#pwdEyeText');
+
+            if (field.type === 'password') {
+                field.type = 'text';
+                if (icon) icon.innerText = '🙈';
+                if (text) text.innerText = 'Hide';
+            } else {
+                field.type = 'password';
+                if (icon) icon.innerText = '👁️';
+                if (text) text.innerText = 'Show';
+            }
+        }
+    </script>
+}

@@ -3,44 +3,128 @@
     var ui = Context.Request.Cookies["cinema_lang"] ?? "en-US";
 }
 
-<div class="content-wrapper" style="padding-top: 4rem; max-width: 440px;">
-    <div class="admin-card" style="box-shadow: var(--shadow-subtle);">
-        <div style="text-align: center; margin-bottom: 2rem;">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🍿</div>
-            <h1 style="font-size: 1.8rem; margin-bottom: 0.25rem;">@UiStrings.Tr(ui, "Create Account")</h1>
-            <p style="color: var(--text-muted); font-size: 0.85rem;">@UiStrings.Tr(ui, "Join CinemaApp for personalized streaming")</p>
+<div class="content-wrapper" style="padding-top: 3.5rem; padding-bottom: 3.5rem; max-width: 460px;">
+    <div class="admin-card" style="box-shadow: var(--shadow-subtle); border-radius: var(--radius-lg); padding: 2rem;">
+        <div style="text-align: center; margin-bottom: 1.75rem;">
+            <div style="font-size: 2.75rem; margin-bottom: 0.5rem; line-height: 1;">🍿</div>
+            <h1 style="font-size: 1.85rem; margin-bottom: 0.35rem; font-family: var(--font-heading);">@UiStrings.Tr(ui, "Create Account")</h1>
+            <p style="color: var(--text-muted); font-size: 0.88rem;">@UiStrings.Tr(ui, "Join CinemaApp for personalized streaming")</p>
         </div>
 
-        @if (ViewBag.Error != null)
+        @if (ViewBag.Error != null || TempData["ErrorMessage"] != null)
         {
-            <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid var(--accent-rose); color: #fda4af; padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.85rem;">
-                @ViewBag.Error
+            <div style="background: rgba(244, 63, 94, 0.15); border: 1px solid var(--accent-rose); color: #fda4af; padding: 0.85rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.88rem; display: flex; align-items: center; gap: 0.6rem;">
+                <span style="font-weight: bold; font-size: 1rem;">✖</span>
+                <span>@(ViewBag.Error ?? TempData["ErrorMessage"])</span>
             </div>
         }
 
-        <form asp-action="Register" method="post">
-            <div class="form-group">
-                <label class="form-label">@UiStrings.Tr(ui, "Email Address")</label>
-                <input type="email" name="email" class="form-control" placeholder="yourname@example.com" required />
+        <form asp-action="Register" method="post" id="registerForm" onsubmit="return validateRegisterForm();">
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">@UiStrings.Tr(ui, "Email Address")</label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1rem; color: var(--text-dim); pointer-events: none;">📧</span>
+                    <input type="email" id="regEmail" name="email" class="form-control" style="padding-left: 2.6rem;" 
+                           value="@ViewBag.Email" placeholder="e.g. name@example.com" required autocomplete="email" />
+                </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">@UiStrings.Tr(ui, "Password")</label>
-                <input type="password" name="password" class="form-control" placeholder="••••••••" required />
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <label class="form-label" style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0;">@UiStrings.Tr(ui, "Password")</label>
+                    <button type="button" onclick="togglePasswordVisibility('regPassword', this)" style="background: none; border: none; color: var(--text-dim); font-size: 0.78rem; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 0;">
+                        <span id="pwdEyeIcon">👁️</span> <span id="pwdEyeText">Show</span>
+                    </button>
+                </div>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1rem; color: var(--text-dim); pointer-events: none;">🔒</span>
+                    <input type="password" id="regPassword" name="password" class="form-control" style="padding-left: 2.6rem;" 
+                           placeholder="At least 6 characters" required minlength="6" autocomplete="new-password" oninput="checkPasswordMatch()" />
+                </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 2rem;">
-                <label class="form-label">@UiStrings.Tr(ui, "Confirm Password")</label>
-                <input type="password" name="confirmPassword" class="form-control" placeholder="••••••••" required />
+            <div class="form-group" style="margin-bottom: 1.75rem;">
+                <label class="form-label" style="font-size: 0.85rem; font-weight: 600;">@UiStrings.Tr(ui, "Confirm Password")</label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1rem; color: var(--text-dim); pointer-events: none;">🔒</span>
+                    <input type="password" id="regConfirmPassword" name="confirmPassword" class="form-control" style="padding-left: 2.6rem;" 
+                           placeholder="Repeat password" required minlength="6" autocomplete="new-password" oninput="checkPasswordMatch()" />
+                </div>
+                <div id="pwdMatchMsg" style="font-size: 0.78rem; margin-top: 0.35rem; display: none;"></div>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem;">
-                @UiStrings.Tr(ui, "Create Free Account")
+            <button type="submit" id="btnSubmitRegister" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <span>@UiStrings.Tr(ui, "Create Free Account")</span>
+                <span>→</span>
             </button>
         </form>
 
-        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted);">
-            @UiStrings.Tr(ui, "Already have an account?") <a asp-action="Login" style="color: var(--accent-cyan); font-weight: 600;">@UiStrings.Tr(ui, "Sign In")</a>
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.88rem; color: var(--text-muted);">
+            @UiStrings.Tr(ui, "Already have an account?") 
+            <a asp-action="Login" style="color: var(--accent-cyan); font-weight: 700; text-decoration: underline; text-underline-offset: 3px;">
+                @UiStrings.Tr(ui, "Sign In")
+            </a>
+        </div>
+
+        <!-- Benefits Highlights -->
+        <div style="margin-top: 2rem; padding: 1rem; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-md); font-size: 0.8rem; color: var(--text-muted);">
+            <div style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 0.5rem;">Free Member Benefits</div>
+            <div style="display: flex; flex-direction: column; gap: 0.35rem;">
+                <div>🎬 Stream standard resolution movies free forever</div>
+                <div>🌐 Instant multilingual audio & subtitles in English, Armenian & Russian</div>
+                <div>⭐ Upgrade to VIP Pass anytime for 1080p Full HD</div>
+            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function checkPasswordMatch() {
+            const pwd = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirmPassword').value;
+            const msg = document.getElementById('pwdMatchMsg');
+
+            if (!confirm) {
+                msg.style.display = 'none';
+                return;
+            }
+
+            msg.style.display = 'block';
+            if (pwd === confirm) {
+                msg.style.color = '#6ee7b7';
+                msg.innerText = '✓ Passwords match';
+            } else {
+                msg.style.color = '#fda4af';
+                msg.innerText = '✖ Passwords do not match';
+            }
+        }
+
+        function validateRegisterForm() {
+            const pwd = document.getElementById('regPassword').value;
+            const confirm = document.getElementById('regConfirmPassword').value;
+
+            if (pwd !== confirm) {
+                alert('Passwords do not match. Please verify and try again.');
+                return false;
+            }
+            return true;
+        }
+
+        function togglePasswordVisibility(fieldId, btn) {
+            const field = document.getElementById(fieldId);
+            const icon = btn.querySelector('#pwdEyeIcon');
+            const text = btn.querySelector('#pwdEyeText');
+
+            if (field.type === 'password') {
+                field.type = 'text';
+                if (icon) icon.innerText = '🙈';
+                if (text) text.innerText = 'Hide';
+            } else {
+                field.type = 'password';
+                if (icon) icon.innerText = '👁️';
+                if (text) text.innerText = 'Show';
+            }
+        }
+    </script>
+}

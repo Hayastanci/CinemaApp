@@ -34,16 +34,22 @@ public class AccountController : Controller
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-            ViewBag.Error = "Please enter both email and password.";
+            ViewBag.Error = "Please enter both email/username and password.";
+            ViewBag.ReturnUrl = returnUrl;
             return View();
         }
 
-        var normalizedEmail = email.Trim().ToLowerInvariant();
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+        var normalizedInput = email.Trim().ToLowerInvariant();
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == normalizedInput);
+        if (user == null && !normalizedInput.Contains("@"))
+        {
+            user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email.StartsWith(normalizedInput + "@"));
+        }
 
         if (user == null || !PasswordHasher.VerifyPassword(password, user.PasswordHash))
         {
-            ViewBag.Error = "Invalid email or password.";
+            ViewBag.Error = "Invalid email/username or password.";
+            ViewBag.ReturnUrl = returnUrl;
             return View();
         }
 
@@ -51,6 +57,7 @@ public class AccountController : Controller
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.Email.Split('@')[0]),
             new Claim(ClaimTypes.Role, user.Role.ToString()),
             new Claim("is_subscribed", user.IsSubscribed ? "true" : "false")
         };
@@ -74,9 +81,17 @@ public class AccountController : Controller
     [HttpPost]
     public async Task<IActionResult> Register(string email, string password, string confirmPassword)
     {
+        ViewBag.Email = email;
+
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
             ViewBag.Error = "Email and password are required.";
+            return View();
+        }
+
+        if (password.Length < 6)
+        {
+            ViewBag.Error = "Password must be at least 6 characters long.";
             return View();
         }
 
@@ -87,9 +102,15 @@ public class AccountController : Controller
         }
 
         var normalizedEmail = email.Trim().ToLowerInvariant();
+        if (!normalizedEmail.Contains("@") || !normalizedEmail.Contains("."))
+        {
+            ViewBag.Error = "Please enter a valid email address.";
+            return View();
+        }
+
         if (await _dbContext.Users.AnyAsync(u => u.Email == normalizedEmail))
         {
-            ViewBag.Error = "An account with this email already exists.";
+            ViewBag.Error = "An account with this email address already exists.";
             return View();
         }
 
@@ -105,6 +126,7 @@ public class AccountController : Controller
         _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync();
 
+        TempData["SuccessMessage"] = "Account created successfully! Please sign in with your credentials.";
         return RedirectToAction(nameof(Login));
     }
 
